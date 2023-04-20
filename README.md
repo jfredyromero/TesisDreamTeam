@@ -4,8 +4,17 @@ Este repositorio contiene el código y los recursos utilizados en la investigaci
 
 ## Estructura del repositorio
 
-- `datasets`: Contiene los conjuntos de datos utilizados para validar los resultados obtenidos en la tesis.
-- `src`: Contiene el código fuente utilizado para implementar el esquema de cuantificación de señales de voz en el dominio wavelet mediante el esquema lifting en MATLAB.
+- `Grabaciones/`: contiene las grabaciones de voz utilizadas en la investigación.
+- `Mediciones/`: contiene los archivos utilizados para medir el PESQ y el NMSE.
+  - `PESQ.m`
+  - `NMSE.m`
+- `Resultados/`: Contiene los resultados obtenidos en la investigación.
+- `Src/`: contiene el código fuente utilizado para implementar el esquema lifting y mallat.
+  - `Lifting/`: Contiene los archivos correspondientes al algoritmo de cuantificación lifting.
+  - `Mallat/`: Contiene los archivos correspondientes al algoritmo de cuantificación mallat.
+  - `pruebasLifting.m`: Archivo principal que contiene el código para realizar las pruebas del esquema Lifting.
+  - `pruebasMallat.m`: Archivo principal que contiene el código para realizar las pruebas del esquema Mallat.
+- `Utilidades/`: Contiene las funciones y scripts auxiliares utilizados en la investigación.
 
 ## Instrucciones de uso
 
@@ -13,5 +22,12 @@ Para utilizar el código fuente y los conjuntos de datos en MATLAB, sigue los si
 
 1. Descarga o clona este repositorio en tu ordenador.
 2. Abre MATLAB y selecciona la carpeta `src` como directorio de trabajo.
-3. Ejecuta el archivo `main.m` para obtener los resultados del esquema de cuantificación.
-4. Para utilizar los conjuntos de datos, abre el archivo correspondiente en MATLAB y sigue las instrucciones incluidas en el mismo.
+3. Ejecuta el archivo `pruebasLifting.m` o `pruebasMallat.m` en MATLAB para ejecutar las pruebas correspondientes al algoritmo Lifting o Mallat, respectivamente.
+
+Si deseas utilizar alguna de las funciones o scripts auxiliares ubicados en la carpeta `Utilidades/`, simplemente añade la ruta correspondiente en MATLAB para que pueda ser utilizada.
+
+Para cargar un archivo `.mat` de otra carpeta en tu código, utiliza la función `load('ruta/al/archivo.mat')`.
+
+¡Gracias por utilizar nuestro repositorio! Si tienes alguna pregunta o problema, no dudes en contactarnos.
+
+
