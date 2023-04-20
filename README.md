@@ -4,10 +4,10 @@ Este repositorio contiene el código y los recursos utilizados en la investigaci
 
 ## Estructura del repositorio
 
-- `Grabaciones/`: contiene las grabaciones de voz utilizadas en la investigación.
-- `Mediciones/`: contiene los archivos utilizados para medir el PESQ y el NMSE.
-  - `PESQ.m`
-  - `NMSE.m`
+- `Grabaciones/`: Contiene las grabaciones de voz utilizadas en la investigación.
+- `Mediciones/`: Contiene los archivos utilizados para medir el PESQ y el NMSE de los audios procesados.
+  - `medirPESQ.m`: Archivo que contiene el código para realizar la medición objetiva PESQ sobre el audio procesado.
+  - `medirNMSE.m`: Archivo que contiene el código para realizar la medición objetiva NMSE sobre el audio procesado.
 - `Resultados/`: Contiene los resultados obtenidos en la investigación.
 - `Src/`: contiene el código fuente utilizado para implementar el esquema lifting y mallat.
   - `Lifting/`: Contiene los archivos correspondientes al algoritmo de cuantificación lifting.
@@ -15,6 +15,11 @@ Este repositorio contiene el código y los recursos utilizados en la investigaci
   - `pruebasLifting.m`: Archivo principal que contiene el código para realizar las pruebas del esquema Lifting.
   - `pruebasMallat.m`: Archivo principal que contiene el código para realizar las pruebas del esquema Mallat.
 - `Utilidades/`: Contiene las funciones y scripts auxiliares utilizados en la investigación.
+  - `audioLecture.m/`: Archivo que contiene el código para realizar la lectura automatizada de los audios dentro de la carpeta `Grabaciones/`.
+  - `cuantUniV.m/`: Archivo que contiene el código para realizar la cuantificación uniforme de un grupo de coeficientes.
+  - `getColumnsNames.m`: Archivo que contiene el código para obtener los nombres de las columnas de las tablas donde se van a guardar los resultados.
+  - `saveResults.m`: Archivo que contiene el código para guardar los resultados de forma dinámica dentro de la carpeta `Resultados/`.
+  - `signalCropper.m`: Archivo que contiene el código para realizar el recorte necesario de los coeficientes Wavelet y Scaling para que tengan un tamaño potencia de 2.
 
 ## Instrucciones de uso
 
