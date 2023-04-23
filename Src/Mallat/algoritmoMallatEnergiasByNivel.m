@@ -1,3 +1,9 @@
+%% Importación de funciones
+
+addpath('../../Utilidades/');
+addpath('../../Mediciones/');
+
+
 %% Limpieza de variables
 
 clear;
@@ -11,14 +17,16 @@ fw = "db1";
 %---------------------------FILTROS MALLAT---------------------------------
 [ha, ga, hs, gs] = wfilters(fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 2;
+n = 1;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 256;
+q = 32;
+%--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
+cama = 5;
 
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('Grabaciones/Mujeres/Veronica Lopez/8. Veronica Lopez.m4a');
+[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/9. Veronica Lopez.m4a');
 Ts = 1 / Fs;
 
 
@@ -90,48 +98,73 @@ totalEnergia = sum(promedioEnergia);
 
 %---------------------BITS A UTILIZAR POR MUESTRA--------------------------
 bitsPerSample = log2(q);
-%------------------BITS A UTILIZAR POR TODO EL AUDIO-----------------------
+%------------------BITS A UTILIZAR POR TRAMA DEL AUDIO---------------------
 bitsMaximosPerTrama = bitsPerSample * tramaSamples; 
 %----------------------PORCENTAJES DE ENERGÍA------------------------------
 porcentajesEnergia = promedioEnergia / totalEnergia;
 %--------------MATRIZ DE BITS ASIGNADOS POR COEFICIENTES-------------------
-coefBits = ones(1, n + 1)';
-%-------MATRIZ NIVELES DE CUANTIFICACION POR NIVEL DE DESCOMPOSICIÓN-------
-qPerNivelDescomp = ones(1, n + 1)';
-%---------------------CANTIDAD DE BITS ASIGNADOS---------------------------
-bitsAsignados = 0;
-% Se itera en los niveles de descomposición
-for i = 1:n
-    % Se agrega un bit por cada coeficiente Wavelet de cada nivel de una
-    % trama
-    bitsAsignados = bitsAsignados + length(tramaWaveletCoef{i});
+coefBits = ones(1, n + 1)' * cama;
+
+aux = totalCoef(:, 1);
+for i = 1:n + 1
+    coefBits(i) = length(aux{i}) * coefBits(i);
 end
-% Se agrega un bit por cada coeficiente Scaling de una trama
-bitsAsignados = bitsAsignados + length(tramaScalingCoef);
-% La suma anterior siempre va a ser equivalente al número de muestras de
-% una trama
-%---------------------CANTIDAD DE BITS RESTANTES---------------------------
-bitsRestantesPerTrama = bitsMaximosPerTrama - bitsAsignados;
-%-----------------BITS PARA CADA NIVEL DE DESCOMPOSICIÓN-------------------
-bitsPerNivelDescomp = round(bitsRestantesPerTrama * porcentajesEnergia);
-%------------------BITS PARA COEFICIENTES WAVELET--------------------------
-for i = 1:n
-    coefBits(i) = coefBits(i) + floor(bitsPerNivelDescomp(i) / length(tramaWaveletCoef{i}));
-    qPerNivelDescomp(i) = 2^(coefBits(i));
+
+%----------CANTIDAD DE BITS ASIGNADOS PARA CADA TRAMA DEL AUDIO------------
+bitsAsignadosPerTrama = sum(coefBits);
+
+% Si se asignan más de (1024 * cama) bits hay un error
+if(bitsAsignadosPerTrama ~=  tramaSamples * cama)
+    disp("===============================================")
+    disp("ERROR: Se asignaron como cama más bits de los esperados");
+    disp("===============================================")
+    return;
 end
-%------------------BITS PARA COEFICIENTES SCALING--------------------------
-coefBits(end) = coefBits(end) + floor(bitsPerNivelDescomp(end) / length(tramaScalingCoef));
-qPerNivelDescomp(end) = 2^(coefBits(end));
+
+%----------CANTIDAD DE BITS RESTANTES PARA CADA TRAMA DEL AUDIO------------
+bitsRestantesPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
+% Se asignan los bits en base al aporte de energia de cada coeficiente
+coefBits = coefBits + floor(bitsRestantesPerTrama * porcentajesEnergia);
+
+% Si se han asignado más de la totalidad de bits hay un error
+bitsAsignadosPerTrama = sum(coefBits);
+bitsDesperdiciadosPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
+if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
+    disp("===============================================")
+    disp("ERROR: Se asignaron más bits de los disponibles");
+    disp("===============================================")
+    return;
+end
+
+%-------------------BITS A UTILIZAR POR CADA MUESTRA-----------------------
+bitsPerMuestra = zeros(n + 1, 1);
+%----------------------BITS SOBRANTES POR MUESTRA--------------------------
+bitsDesperdiciadosPerNivel = zeros(n + 1, 1);
+for i = 1:n + 1
+    bitsPerMuestra(i) = floor(coefBits(i) / length(aux{i}));
+    bitsDesperdiciadosPerNivel(i) = mod(coefBits(i), length(aux{i}));
+end
+%---------------------MATRIZ NIVELES DE CUANTIFICACION---------------------
+qPerNivelDescomp = 2.^(bitsPerMuestra);
 
 
 %% Cálculo de bits usados y desperdiciados por trama
 
-bitsUsados = 0;
-for i = 1:n
-    bitsUsados = bitsUsados + coefBits(i) * length(tramaWaveletCoef{i});
+bitsDesperdiciadosPerTrama = bitsDesperdiciadosPerTrama + sum(bitsDesperdiciadosPerNivel);
+bitsUsadosPerNivel = coefBits - bitsDesperdiciadosPerNivel;
+bitsUsadosPerTrama = sum(bitsUsadosPerNivel);
+
+% Si la suma de los bits usados y los bits desperdiciados es diferente de
+% la cantidad maxima de bits a usar hay un error
+if (bitsUsadosPerTrama + bitsDesperdiciadosPerTrama) ~= bitsMaximosPerTrama
+    disp("===============================================")
+    disp("ERROR: Ocurrio un error en la asignación de bits");
+    disp("===============================================")
+    return;
 end
-bitsUsados = bitsUsados + length(tramaScalingCoef) * coefBits(end);
-bitsDesperdiciados = bitsMaximosPerTrama - bitsUsados;
+
+bitsDesperdiciados = bitsDesperdiciadosPerTrama * 100 / bitsMaximosPerTrama;
+bitsUsados = bitsUsadosPerTrama * 100 / bitsMaximosPerTrama;
 
 
 %% Cuantificación de los coeficientes totales
@@ -159,6 +192,9 @@ for i = 1:numTramas
     end
     senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = lastScalingCoef;
 end
+
+medirPESQ(xn(1:length(senalReconst)), senalReconst')
+medirNMSE(xn(1:length(senalReconst)), senalReconst')
 
 
 %% Reproducción de la señal reconstruida

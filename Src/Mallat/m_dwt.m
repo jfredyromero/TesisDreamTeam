@@ -7,14 +7,14 @@ function [s,dx] = m_dwt(x, ha, ga, n)
     %w es el vector de coeficientes wavelet de un orden inferieor 
     %dx es la celda con los valores de los coeficientes wavelet
 
-    dx=cell(n,1);
-    [s,w] = dwt(x,ha,ga);
-    dx{1} = signalCropper(w)';
-    if n>1
-        for i=2:n
-            [s,w] = dwt(s,ha,ga);            
-            dx{i} = signalCropper(w)';
+    dx = cell(n,1);
+    [s,w] = dwt(x,ha, ga);
+    dx{1} = w';
+    if n > 1
+        for i = 2:n
+            [s,w] = dwt(s, ha, ga);            
+            dx{i} = w';
         end
     end
-    s = signalCropper(s)';
+    s = s';
 end

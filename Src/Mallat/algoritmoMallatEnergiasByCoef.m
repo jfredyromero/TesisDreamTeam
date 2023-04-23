@@ -1,3 +1,9 @@
+%% Importación de funciones
+
+addpath('../../Utilidades/');
+addpath('../../Mediciones/');
+
+
 %% Limpieza de variables
 
 clear;
@@ -7,18 +13,20 @@ close all;
 %% Definicion de variables
 
 %---------------------------FAMILIA WAVELET--------------------------------
-fw = "db8";
+fw = "db1";
 %---------------------------FILTROS MALLAT---------------------------------
 [ha, ga, hs, gs] = wfilters(fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 2;
+n = 9;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 256;
+q = 32;
+%--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
+cama = 3;
 
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('Grabaciones/Hombres/Fredy Andres Dorado/1. Andres Dorado.m4a');
+[x, Fs] = audioread('../../Grabaciones/Hombres/Fredy Andres Dorado/1. Andres Dorado.m4a');
 Ts = 1 / Fs;
 
 
@@ -101,15 +109,15 @@ for i = 1:numel(totalCoef)
     else
         indexX = mod(i, n + 1);
     end
-    % Se asigna un bit a cada muestra como minimo
-    coefBits(indexX, floor((i - 1) / (n + 1)) + 1) = length(totalCoef{i});
+    % Se asigna la cama de bits a cada muestra como minimo
+    coefBits(indexX, floor((i - 1) / (n + 1)) + 1) = length(totalCoef{i}) * cama;
 end
 
-% Si se asignan más de 1024 bits hay un error
+% Si se asignan más de (1024 * cama) bits hay un error
 bitsAsignados = sum(sum(coefBits));
-if(bitsAsignados ~= numTramas * tramaSamples)
+if(bitsAsignados ~= numTramas * tramaSamples * cama)
     disp("===============================================")
-    disp("ERROR: Se asignaron más bits de los esperados");
+    disp("ERROR: Se asignaron como cama más bits de los esperados");
     disp("===============================================")
     return;
 end

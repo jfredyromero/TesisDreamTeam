@@ -12,13 +12,5 @@ function recx = p_idwt(s, w, hs, gs)
     
     %dado que la IDWT es un algoritmo iterativo recursivo, esta función
     %deberá llamarse por cada nivel de descomposición implementado
-        
-    fix = length(w) - length(s); %en caso de que existan diferencias en las longitudes de los coeficientes
-    if fix < 0
-        w = [w; zeros(1, fix)];
-    elseif fix > 0
-        s = [s; zeros(1, fix)];
-    end
-    recx = conv(gs, upsample(w, 2)) + conv(hs, upsample(s, 2));
-    recx = signalCropper(recx);
+    recx = idwt(s, w, hs, gs);
 end

@@ -1,7 +1,14 @@
+%% Importación de funciones
+
+addpath('../../Utilidades/');
+addpath('../../Mediciones/');
+
+
 %% Limpieza de variables
 
 clear;
 close all;
+
 
 %% Definicion de variables
 
@@ -10,14 +17,16 @@ fw = "db1";
 %---------------------------FILTROS MALLAT---------------------------------
 [ha, ga, hs, gs] = wfilters(fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 1;
+n = 4;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 256;
+q = 8;
+
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('Grabaciones/Mujeres/Veronica Lopez/8. Veronica Lopez.m4a');
+[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/9. Veronica Lopez.m4a');
 Ts = 1 / Fs;
+
 
 %% Muestreo de la señal a 16KHz
 
@@ -29,6 +38,7 @@ t = 0:Ts:length(x) / Fs - Ts;
 %---------------------------SEÑAL SUBMUESTREADA------------------------------
 xn = downsample(x, i);
 fs = Fs/i;
+
 
 %% División de la señal en tramas
 
@@ -45,6 +55,7 @@ for i = 1:numTramas
     fin = i * tramaSamples;
     tramas(i, :) = xn(inicio:fin);
 end
+
 
 %% Transformada Wavelet con algoritmo Mallat
 
@@ -64,6 +75,7 @@ end
 %------------------------COEFICIENTES TOTALES------------------------------
 totalCoef = [waveletCoef; scalingCoef];
 
+
 %% Cuantificación de los coeficientes totales
 
 %---------------MATRIZ DE LOS COEFICIENTES CUANTIFICADOS-------------------
@@ -77,7 +89,9 @@ for i = 1:numel(totalCoef)
     totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, q);
 end
 
+
 %% Reconstrucción de las tramas y de la señal original
+
 senalReconst = 1:numel(tramas);
 for i = 1:numTramas
     lastScalingCoef = totalCoefQuant{end, i};
@@ -88,5 +102,10 @@ for i = 1:numTramas
     senalReconst(((i - 1) * length(lastScalingCoef)) + 1:length(lastScalingCoef) * i) = lastScalingCoef;
 end
 
+medirPESQ(xn(1:length(senalReconst)), senalReconst')
+medirNMSE(xn(1:length(senalReconst)), senalReconst')
+
+
 %% Reproducción de la señal reconstruida
+
 sound(senalReconst, fs);
