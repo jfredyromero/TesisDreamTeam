@@ -13,13 +13,13 @@ close all;
 %% Definicion de variables
 
 %---------------------------FAMILIA WAVELET--------------------------------
-fw = "db1";
+fw = "db9";
 %---------------------------FILTROS MALLAT---------------------------------
 [ha, ga, hs, gs] = wfilters(fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 4;
+n = 1;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 8;
+q = 16;
 
 
 %% Lectura de la señal de voz
@@ -94,12 +94,7 @@ end
 
 senalReconst = 1:numel(tramas);
 for i = 1:numTramas
-    lastScalingCoef = totalCoefQuant{end, i};
-    for j = 1:n
-        lastWaveletCoef = totalCoefQuant{end - j, i};
-        lastScalingCoef = p_idwt(lastScalingCoef, lastWaveletCoef, hs, gs);
-    end
-    senalReconst(((i - 1) * length(lastScalingCoef)) + 1:length(lastScalingCoef) * i) = lastScalingCoef;
+    senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = p_idwt(totalCoefQuant(:, i), hs, gs);
 end
 
 medirPESQ(xn(1:length(senalReconst)), senalReconst')

@@ -2,7 +2,7 @@
 %Universidad del Cauca 
 %María Manuela Silva Zambrano
 
-function recx = p_idwt(s, w, hs, gs)
+function recx = p_idwt(coefQuant, hs, gs)
     %p_idwt es una función personalizada para aplicar la IDWT sobre un vector
     %hs son los coeficientes para representar la función scaling 
     %gs son los coeficientes para representar la función wavlet
@@ -10,7 +10,12 @@ function recx = p_idwt(s, w, hs, gs)
     %w es el vector de coeficientes wavelet de más bajo orden 
     %recx es el vector de coeficientes scaling de un orden superior
     
-    %dado que la IDWT es un algoritmo iterativo recursivo, esta función
-    %deberá llamarse por cada nivel de descomposición implementado
-    recx = idwt(s, w, hs, gs);
+    lastScalingCoef = coefQuant{end}';    
+    for j = 1:length(coefQuant) - 1
+        lastWaveletCoef = coefQuant{end - j}';
+        currentSize = length(lastWaveletCoef) * 2;
+        lastScalingCoef = conv(gs, upsample(lastWaveletCoef, 2)) + conv(hs, upsample(lastScalingCoef, 2));
+        lastScalingCoef = signalCropper(lastScalingCoef, currentSize);
+    end
+    recx = lastScalingCoef;
 end

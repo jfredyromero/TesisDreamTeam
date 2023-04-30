@@ -1,7 +1,6 @@
-function signal = signalCropper(signal)
-    sampleSize = 2^round(log2(length(signal)));
-    if length(signal) ~= sampleSize
-        offset = length(signal) - sampleSize;
+function signal = signalCropper(signal, finalSize)
+    if length(signal) ~= finalSize
+        offset = length(signal) - finalSize;
         if mod(offset,2) == 0
             signal = signal(offset/2+1:end-offset/2);
         else

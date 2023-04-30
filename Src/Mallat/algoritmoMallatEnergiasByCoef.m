@@ -13,20 +13,20 @@ close all;
 %% Definicion de variables
 
 %---------------------------FAMILIA WAVELET--------------------------------
-fw = "db1";
+fw = "db9";
 %---------------------------FILTROS MALLAT---------------------------------
 [ha, ga, hs, gs] = wfilters(fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 9;
+n = 1;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 32;
+q = 16;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
 cama = 3;
 
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('../../Grabaciones/Hombres/Fredy Andres Dorado/1. Andres Dorado.m4a');
+[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/9. Veronica Lopez.m4a');
 Ts = 1 / Fs;
 
 
@@ -124,6 +124,14 @@ end
 
 %--------------CANTIDAD DE BITS RESTANTES PARA TODO EL AUDIO---------------
 bitsRestantes = bitsMaximos - bitsAsignados;
+
+if(bitsAsignados > bitsMaximos)
+    disp("===============================================")
+    disp("ERROR: Se asignaron más bits de los disponibles");
+    disp("===============================================")
+    return;
+end
+
 % Se asignan los bits en base al aporte de energia de cada coeficiente
 coefBits = coefBits + floor(bitsRestantes * porcentajesEnergia);
 
@@ -165,6 +173,9 @@ if (bitsUsados + bitsDesperdiciados) ~= bitsMaximos
     return;
 end
 
+bitsDesperdiciados = bitsDesperdiciados * 100 / bitsMaximos;
+bitsUsados = bitsUsados * 100 / bitsMaximos;
+
 
 %% Cuantificación de los coeficientes totales
 
@@ -184,12 +195,7 @@ end
 
 senalReconst = 1:numel(tramas);
 for i = 1:numTramas
-    lastScalingCoef = totalCoefQuant{end, i};
-    for j = 1:n
-        lastWaveletCoef = totalCoefQuant{end - j, i};
-        lastScalingCoef = p_idwt(lastScalingCoef, lastWaveletCoef, hs, gs);
-    end
-    senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = lastScalingCoef;
+    senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = p_idwt(totalCoefQuant(:, i), hs, gs);
 end
 
 medirPESQ(xn(1:length(senalReconst)), senalReconst')

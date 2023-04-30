@@ -8,13 +8,15 @@ function [s,dx] = m_dwt(x, ha, ga, n)
     %dx es la celda con los valores de los coeficientes wavelet
 
     dx = cell(n,1);
-    [s,w] = dwt(x,ha, ga);
-    dx{1} = w';
+    [s,w] = dwt(x, ha, ga);
+    currentSize = 2^floor(log2(length(s)));
+    dx{1} = signalCropper(w, currentSize)';
     if n > 1
         for i = 2:n
-            [s,w] = dwt(s, ha, ga);            
-            dx{i} = w';
+            [s,w] = dwt(s, ha, ga);  
+            currentSize = currentSize/2;
+            dx{i} = signalCropper(w, currentSize)';
         end
     end
-    s = s';
+    s = signalCropper(s, currentSize)';
 end

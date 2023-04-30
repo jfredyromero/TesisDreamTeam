@@ -13,15 +13,15 @@ close all;
 %% Definicion de variables
 
 %---------------------------FAMILIA WAVELET--------------------------------
-fw = "db1";
+fw = "db9";
 %---------------------------FILTROS MALLAT---------------------------------
 [ha, ga, hs, gs] = wfilters(fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 1;
+n = 9;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 32;
+q = 256;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 5;
+cama = 1;
 
 
 %% Lectura de la señal de voz
@@ -123,6 +123,14 @@ end
 
 %----------CANTIDAD DE BITS RESTANTES PARA CADA TRAMA DEL AUDIO------------
 bitsRestantesPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
+
+if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
+    disp("===============================================")
+    disp("ERROR: Se asignaron más bits de los disponibles");
+    disp("===============================================")
+    return;
+end
+
 % Se asignan los bits en base al aporte de energia de cada coeficiente
 coefBits = coefBits + floor(bitsRestantesPerTrama * porcentajesEnergia);
 
@@ -185,12 +193,7 @@ end
 
 senalReconst = 1:numel(tramas);
 for i = 1:numTramas
-    lastScalingCoef = totalCoefQuant{end, i};
-    for j = 1:n
-        lastWaveletCoef = totalCoefQuant{end - j, i};
-        lastScalingCoef = p_idwt(lastScalingCoef, lastWaveletCoef, hs, gs);
-    end
-    senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = lastScalingCoef;
+    senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = p_idwt(totalCoefQuant(:, i), hs, gs);
 end
 
 medirPESQ(xn(1:length(senalReconst)), senalReconst')
