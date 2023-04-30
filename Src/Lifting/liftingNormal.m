@@ -17,9 +17,9 @@ fw = "db1";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 4;
+n = 10;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 8;
+q = 256;
 
 
 %% Lectura de la señal de voz

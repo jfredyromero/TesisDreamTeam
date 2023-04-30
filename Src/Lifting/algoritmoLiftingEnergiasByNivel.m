@@ -19,14 +19,14 @@ lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
 n = 9;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 32;
+q = 256;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 3;
+cama = 8;
 
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('../../Grabaciones/Hombres/Fredy Andres Dorado/1. Andres Dorado.m4a');
+[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/9. Veronica Lopez.m4a');
 Ts = 1 / Fs;
 
 
@@ -58,7 +58,7 @@ for i = 1:numTramas
 end
 
 
-%% Transformada Wavelet con algoritmo Mallat
+%% Transformada Wavelet con algoritmo Lifting
 
 % -----------------------COEFICIENTES SCALING------------------------------
 scalingCoef = cell([1, numTramas]);
@@ -123,6 +123,14 @@ end
 
 %----------CANTIDAD DE BITS RESTANTES PARA CADA TRAMA DEL AUDIO------------
 bitsRestantesPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
+
+if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
+    disp("===============================================")
+    disp("ERROR: Se asignaron más bits de los disponibles");
+    disp("===============================================")
+    return;
+end
+
 % Se asignan los bits en base al aporte de energia de cada coeficiente
 coefBits = coefBits + floor(bitsRestantesPerTrama * porcentajesEnergia);
 

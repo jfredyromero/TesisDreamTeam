@@ -3,10 +3,11 @@
 % Dream Team: Jhon Fredy Romero y Lina Virginia Muñoz
 % Función para la cuantificación de una señal en el dominio Wavelet con el
 %   algoritmo de Lifting
-function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoLifting(x, n, q, lsc)
+function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoLiftingEnergiasByNivelFunction(x, n, q, cama, lsc)
     % x es la señal de entrada a cuantificar 
     % n es el número de niveles de descomposición
     % q es el número de niveles de cuantificación
+    % cama es el número de bits repartidos inicialmente a cada muestra
     % lsc es el objeto usado por la funcion de la transformada donde se
     %   especifica la Wavelet madre en uso
 
@@ -21,6 +22,7 @@ function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoLifting(x, n, 
     %---------------------------SEÑAL SUBMUESTREADA------------------------------
     xn = downsample(x, fsm);
     fs = Fs/fsm;
+
 
     %% División de la señal en tramas
 
@@ -38,14 +40,15 @@ function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoLifting(x, n, 
         tramas(i, :) = xn(inicio:fin);
     end
 
-    %% Transformada Wavelet con esquema Lifting
+
+    %% Transformada Wavelet con algoritmo Lifting
 
     % -----------------------COEFICIENTES SCALING------------------------------
     scalingCoef = cell([1, numTramas]);
     %------------------------COEFICIENTES WAVELET------------------------------
     waveletCoef = cell([n, numTramas]);
     for i = 1:numTramas
-        [tramaScalingCoef, tramaWaveletCoef] = lwt(tramas(i, :), 'LiftingScheme', lsc, 'Level', n);
+        [tramaScalingCoef, tramaWaveletCoef] = lwt(tramas(i, :), 'LiftingScheme', lsc, 'Level', n); 
         % Se guardan los coeficientes Scaling de la trama
         scalingCoef{i} = tramaScalingCoef;
         % Se guardan los coeficientes Wavelet de cada uno de los n niveles de descomposición trama
@@ -55,6 +58,7 @@ function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoLifting(x, n, 
     end
     %------------------------COEFICIENTES TOTALES------------------------------
     totalCoef = [waveletCoef; scalingCoef];
+
 
     %% Cálculo de la energía de los coeficientes
 
@@ -66,56 +70,93 @@ function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoLifting(x, n, 
         else
             indexX = mod(i, n + 1);
         end
-        energiaCoef(indexX, floor((i - 1) / (n + 1)) + 1) = (1 / length(totalCoef{i})) * sum(totalCoef{i}.^2);
+        energiaCoef(indexX, floor((i - 1) / (n + 1)) + 1) = sum(totalCoef{i}.^2);
+        % energiaCoef(indexX, floor((i - 1) / (n + 1)) + 1) = (1 / length(totalCoef{i})) * sum(totalCoef{i}.^2);
     end
     promedioEnergia = (1/numTramas) * sum(energiaCoef, 2);
     totalEnergia = sum(promedioEnergia);
+
 
     %% Asignación de bits y niveles de cuantificación
 
     %---------------------BITS A UTILIZAR POR MUESTRA--------------------------
     bitsPerSample = log2(q);
-    %------------------BITS A UTILIZAR POR TODO EL AUDIO-----------------------
+    %------------------BITS A UTILIZAR POR TRAMA DEL AUDIO---------------------
     bitsMaximosPerTrama = bitsPerSample * tramaSamples; 
     %----------------------PORCENTAJES DE ENERGÍA------------------------------
     porcentajesEnergia = promedioEnergia / totalEnergia;
     %--------------MATRIZ DE BITS ASIGNADOS POR COEFICIENTES-------------------
-    coefBits = ones(1, n + 1)';
-    %-------MATRIZ NIVELES DE CUANTIFICACION POR NIVEL DE DESCOMPOSICIÓN-------
-    qPerNivelDescomp = ones(1, n + 1)';
-    %---------------------CANTIDAD DE BITS ASIGNADOS---------------------------
-    bitsAsignados = 0;
-    % Se itera en los niveles de descomposición
-    for i = 1:n
-        % Se agrega un bit por cada coeficiente Wavelet de cada nivel de una
-        % trama
-        bitsAsignados = bitsAsignados + length(tramaWaveletCoef{i});
+    coefBits = ones(1, n + 1)' * cama;
+    
+    aux = totalCoef(:, 1);
+    for i = 1:n + 1
+        coefBits(i) = length(aux{i}) * coefBits(i);
     end
-    % Se agrega un bit por cada coeficiente Scaling de una trama
-    bitsAsignados = bitsAsignados + length(tramaScalingCoef);
-    % La suma anterior siempre va a ser equivalente al número de muestras de
-    % una trama
-    %---------------------CANTIDAD DE BITS RESTANTES---------------------------
-    bitsRestantesPerTrama = bitsMaximosPerTrama - bitsAsignados;
-    %-----------------BITS PARA CADA NIVEL DE DESCOMPOSICIÓN-------------------
-    bitsPerNivelDescomp = round(bitsRestantesPerTrama * porcentajesEnergia);
-    %------------------BITS PARA COEFICIENTES WAVELET--------------------------
-    for i = 1:n
-        coefBits(i) = coefBits(i) + floor(bitsPerNivelDescomp(i) / length(tramaWaveletCoef{i}));
-        qPerNivelDescomp(i) = 2^(coefBits(i));
+    
+    %----------CANTIDAD DE BITS ASIGNADOS PARA CADA TRAMA DEL AUDIO------------
+    bitsAsignadosPerTrama = sum(coefBits);
+    
+    % Si se asignan más de (1024 * cama) bits hay un error
+    if(bitsAsignadosPerTrama ~=  tramaSamples * cama)
+        disp("===============================================")
+        disp("ERROR: Se asignaron como cama más bits de los esperados");
+        disp("===============================================")
+        return;
     end
-    %------------------BITS PARA COEFICIENTES SCALING--------------------------
-    coefBits(end) = coefBits(end) + floor(bitsPerNivelDescomp(end) / length(tramaScalingCoef));
-    qPerNivelDescomp(end) = 2^(coefBits(end));
+    
+    %----------CANTIDAD DE BITS RESTANTES PARA CADA TRAMA DEL AUDIO------------
+    bitsRestantesPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
+    
+    if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
+        disp("===============================================")
+        disp("ERROR: Se asignaron más bits de los disponibles");
+        disp("===============================================")
+        return;
+    end
+    
+    % Se asignan los bits en base al aporte de energia de cada coeficiente
+    coefBits = coefBits + floor(bitsRestantesPerTrama * porcentajesEnergia);
+    
+    % Si se han asignado más de la totalidad de bits hay un error
+    bitsAsignadosPerTrama = sum(coefBits);
+    bitsDesperdiciadosPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
+    if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
+        disp("===============================================")
+        disp("ERROR: Se asignaron más bits de los disponibles");
+        disp("===============================================")
+        return;
+    end
+    
+    %-------------------BITS A UTILIZAR POR CADA MUESTRA-----------------------
+    bitsPerMuestra = zeros(n + 1, 1);
+    %----------------------BITS SOBRANTES POR MUESTRA--------------------------
+    bitsDesperdiciadosPerNivel = zeros(n + 1, 1);
+    for i = 1:n + 1
+        bitsPerMuestra(i) = floor(coefBits(i) / length(aux{i}));
+        bitsDesperdiciadosPerNivel(i) = mod(coefBits(i), length(aux{i}));
+    end
+    %---------------------MATRIZ NIVELES DE CUANTIFICACION---------------------
+    qPerNivelDescomp = 2.^(bitsPerMuestra);
+
 
     %% Cálculo de bits usados y desperdiciados por trama
 
-    bitsUsados = 0;
-    for i = 1:n
-        bitsUsados = bitsUsados + coefBits(i) * length(tramaWaveletCoef{i});
+    bitsDesperdiciadosPerTrama = bitsDesperdiciadosPerTrama + sum(bitsDesperdiciadosPerNivel);
+    bitsUsadosPerNivel = coefBits - bitsDesperdiciadosPerNivel;
+    bitsUsadosPerTrama = sum(bitsUsadosPerNivel);
+    
+    % Si la suma de los bits usados y los bits desperdiciados es diferente de
+    % la cantidad maxima de bits a usar hay un error
+    if (bitsUsadosPerTrama + bitsDesperdiciadosPerTrama) ~= bitsMaximosPerTrama
+        disp("===============================================")
+        disp("ERROR: Ocurrio un error en la asignación de bits");
+        disp("===============================================")
+        return;
     end
-    bitsUsados = bitsUsados + length(tramaScalingCoef) * coefBits(end);
-    bitsDesperdiciados = bitsMaximosPerTrama - bitsUsados;
+    
+    bitsDesperdiciados = bitsDesperdiciadosPerTrama * 100 / bitsMaximosPerTrama;
+    bitsUsados = bitsUsadosPerTrama * 100 / bitsMaximosPerTrama;
+
 
     %% Cuantificación de los coeficientes totales
 
@@ -130,7 +171,9 @@ function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoLifting(x, n, 
         totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, qPerNivelDescomp(qIndex));
     end
 
+
     %% Reconstrucción de las tramas y de la señal original
+
     cuantSignal = 1:numel(tramas);
     for i = 1:numTramas
         cuantSignal(((i - 1) * tramaSamples) + 1:tramaSamples * i) = ilwt(totalCoefQuant{n + 1, i}, totalCoefQuant(1:n, i), 'LiftingScheme', lsc)'; 
