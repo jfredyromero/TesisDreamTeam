@@ -13,15 +13,15 @@ close all;
 %% Definicion de variables
 
 %---------------------------FAMILIA WAVELET--------------------------------
-fw = "db9";
+fw = "sym8";
 %---------------------------FILTROS MALLAT---------------------------------
 [ha, ga, hs, gs] = wfilters(fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 9;
+n = 4;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 256;
+q = 16;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 1;
+cama = 4;
 
 
 %% Lectura de la señal de voz

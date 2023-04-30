@@ -3,10 +3,11 @@
 % Dream Team: Jhon Fredy Romero y Lina Virginia Muñoz
 % Función para la cuantificación de una señal en el dominio Wavelet con el
 %   algoritmo de Mallat
-function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoMallat(x, n, q, ha, ga, hs, gs)
+function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoMallatEnergiasByNivelFunction(x, n, q, cama, ha, ga, hs, gs)
     % x es la señal de entrada a cuantificar 
     % n es el número de niveles de descomposición
     % q es el número de niveles de cuantificación
+    % cama es el número de bits repartidos inicialmente a cada muestra
     % ha son los coeficientes para representar la función scaling 
     % ga son los coeficientes para representar la función wavlet
     % hs son los coeficientes para representar la función scaling 
@@ -74,47 +75,54 @@ function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoMallat(x, n, q
         energiaCoef(indexX, floor((i - 1) / (n + 1)) + 1) = sum(totalCoef{i}.^2);
         % energiaCoef(indexX, floor((i - 1) / (n + 1)) + 1) = (1 / length(totalCoef{i})) * sum(totalCoef{i}.^2);
     end
-    totalEnergia = sum(sum(energiaCoef));
+    promedioEnergia = (1/numTramas) * sum(energiaCoef, 2);
+    totalEnergia = sum(promedioEnergia);
 
 
     %% Asignación de bits y niveles de cuantificación
-
+    
     %---------------------BITS A UTILIZAR POR MUESTRA--------------------------
     bitsPerSample = log2(q);
-    %------------------BITS A UTILIZAR POR TODO EL AUDIO-----------------------
-    bitsMaximos = bitsPerSample * tramaSamples * numTramas; 
+    %------------------BITS A UTILIZAR POR TRAMA DEL AUDIO---------------------
+    bitsMaximosPerTrama = bitsPerSample * tramaSamples; 
     %----------------------PORCENTAJES DE ENERGÍA------------------------------
-    porcentajesEnergia = energiaCoef / totalEnergia;
+    porcentajesEnergia = promedioEnergia / totalEnergia;
     %--------------MATRIZ DE BITS ASIGNADOS POR COEFICIENTES-------------------
-    coefBits = zeros(n + 1, numTramas);
-    for i = 1:numel(totalCoef)
-        if mod(i, n + 1) == 0
-            indexX = n + 1;
-        else
-            indexX = mod(i, n + 1);
-        end
-        % Se asigna un bit a cada muestra como minimo
-        coefBits(indexX, floor((i - 1) / (n + 1)) + 1) = length(totalCoef{i});
+    coefBits = ones(1, n + 1)' * cama;
+    
+    aux = totalCoef(:, 1);
+    for i = 1:n + 1
+        coefBits(i) = length(aux{i}) * coefBits(i);
     end
     
-    % Si se asignan más de 1024 bits hay un error
-    bitsAsignados = sum(sum(coefBits));
-    if(bitsAsignados ~= numTramas * tramaSamples)
+    %----------CANTIDAD DE BITS ASIGNADOS PARA CADA TRAMA DEL AUDIO------------
+    bitsAsignadosPerTrama = sum(coefBits);
+    
+    % Si se asignan más de (1024 * cama) bits hay un error
+    if(bitsAsignadosPerTrama ~=  tramaSamples * cama)
         disp("===============================================")
-        disp("ERROR: Se asignaron más bits de los esperados");
+        disp("ERROR: Se asignaron como cama más bits de los esperados");
         disp("===============================================")
         return;
     end
     
-    %--------------CANTIDAD DE BITS RESTANTES PARA TODO EL AUDIO---------------
-    bitsRestantes = bitsMaximos - bitsAsignados;
+    %----------CANTIDAD DE BITS RESTANTES PARA CADA TRAMA DEL AUDIO------------
+    bitsRestantesPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
+    
+    if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
+        disp("===============================================")
+        disp("ERROR: Se asignaron más bits de los disponibles");
+        disp("===============================================")
+        return;
+    end
+    
     % Se asignan los bits en base al aporte de energia de cada coeficiente
-    coefBits = coefBits + floor(bitsRestantes * porcentajesEnergia);
+    coefBits = coefBits + floor(bitsRestantesPerTrama * porcentajesEnergia);
     
     % Si se han asignado más de la totalidad de bits hay un error
-    bitsAsignados = sum(sum(coefBits));
-    bitsDesperdiciados = bitsMaximos - bitsAsignados;
-    if(bitsAsignados > bitsMaximos)
+    bitsAsignadosPerTrama = sum(coefBits);
+    bitsDesperdiciadosPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
+    if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
         disp("===============================================")
         disp("ERROR: Se asignaron más bits de los disponibles");
         disp("===============================================")
@@ -122,31 +130,34 @@ function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoMallat(x, n, q
     end
     
     %-------------------BITS A UTILIZAR POR CADA MUESTRA-----------------------
-    bitsPerMuestraCoef = zeros(n + 1, numTramas);
+    bitsPerMuestra = zeros(n + 1, 1);
     %----------------------BITS SOBRANTES POR MUESTRA--------------------------
-    bitsDesperdiciadosPerCoef = zeros(n + 1, numTramas);
-    aux = totalCoef(:, 1);
+    bitsDesperdiciadosPerNivel = zeros(n + 1, 1);
     for i = 1:n + 1
-        bitsPerMuestraCoef(i, :) = floor(coefBits(i, :) / length(aux{i}));
-        bitsDesperdiciadosPerCoef(i, :) = mod(coefBits(i, :), length(aux{i}));
+        bitsPerMuestra(i) = floor(coefBits(i) / length(aux{i}));
+        bitsDesperdiciadosPerNivel(i) = mod(coefBits(i), length(aux{i}));
     end
     %---------------------MATRIZ NIVELES DE CUANTIFICACION---------------------
-    qPerCoef = 2.^(bitsPerMuestraCoef);
+    qPerNivelDescomp = 2.^(bitsPerMuestra);
+
 
     %% Cálculo de bits usados y desperdiciados por trama
 
-    bitsDesperdiciados = bitsDesperdiciados + sum(sum(bitsDesperdiciadosPerCoef));
-    bitsUsadosPerCoef = coefBits - bitsDesperdiciadosPerCoef;
-    bitsUsados = sum(sum(bitsUsadosPerCoef));
+    bitsDesperdiciadosPerTrama = bitsDesperdiciadosPerTrama + sum(bitsDesperdiciadosPerNivel);
+    bitsUsadosPerNivel = coefBits - bitsDesperdiciadosPerNivel;
+    bitsUsadosPerTrama = sum(bitsUsadosPerNivel);
     
     % Si la suma de los bits usados y los bits desperdiciados es diferente de
     % la cantidad maxima de bits a usar hay un error
-    if (bitsUsados + bitsDesperdiciados) ~= bitsMaximos
+    if (bitsUsadosPerTrama + bitsDesperdiciadosPerTrama) ~= bitsMaximosPerTrama
         disp("===============================================")
         disp("ERROR: Ocurrio un error en la asignación de bits");
         disp("===============================================")
         return;
     end
+    
+    bitsDesperdiciados = bitsDesperdiciadosPerTrama * 100 / bitsMaximosPerTrama;
+    bitsUsados = bitsUsadosPerTrama * 100 / bitsMaximosPerTrama;
 
 
     %% Cuantificación de los coeficientes totales
@@ -158,8 +169,8 @@ function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoMallat(x, n, q
             qIndex = n + 1;
         else
             qIndex = mod(i, n + 1);
-        end    
-        totalCoefQuant{i} = cuantUniV(totalCoef{i}, qPerCoef(qIndex, floor((i - 1) / (n + 1)) + 1));
+        end
+        totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, qPerNivelDescomp(qIndex));
     end
 
     
@@ -167,11 +178,6 @@ function [cuantSignal, bitsUsados, bitsDesperdiciados] = algoritmoMallat(x, n, q
 
     cuantSignal = 1:numel(tramas);
     for i = 1:numTramas
-        lastScalingCoef = totalCoefQuant{end, i};
-        for j = 1:n
-            lastWaveletCoef = totalCoefQuant{end - j, i};
-            lastScalingCoef = p_idwt(lastScalingCoef, lastWaveletCoef, hs, gs);
-        end
-        cuantSignal(((i - 1) * tramaSamples) + 1:tramaSamples * i) = lastScalingCoef;
+        cuantSignal(((i - 1) * tramaSamples) + 1:tramaSamples * i) = p_idwt(totalCoefQuant(:, i), hs, gs);
     end
 end

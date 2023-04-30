@@ -17,7 +17,7 @@ fw = "db9";
 %---------------------------FILTROS MALLAT---------------------------------
 [ha, ga, hs, gs] = wfilters(fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 1;
+n = 9;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
 q = 16;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
