@@ -2,28 +2,66 @@
 % Universidad del Cauca 
 % Dream Team: Jhon Fredy Romero y Lina Virginia Muñoz
 % Función para el calculo de la medida objetiva PESQ
+% Author: Jacob Donley
+% University of Wollongong
+% Email: jrd089@uowmail.edu.au
+% Copyright: Jacob Donley 2017
+% Date: 2 August 2017
+% Revision: 0.3 (2 August 2017)
+% Revision: 0.2 (16 June 2016)
 function pesq = medirPESQ(originalSignal, processedSignal)
     % originalSignal es la señal original
     % processedSignal es la señal procesada
     
-    a0 = 4.5;
-    a1 = -0.1;
-    a2 = -0.0309;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    d_sym = calculate_distortion_sym(originalSignal, processedSignal);
-    d_asym = calculate_distortion_asym(originalSignal, processedSignal);
+    % Just incase this function tries to call within a class folder we should 
+    % create a function handle for this function to use instead
+    infun = dbstack('-completenames');
+    funcName = 'PESQ_MEX';
+    funcPath = infun.file;
+    classDirs = getClassDirs(funcPath);
+    pesq_mex_ = str2func([classDirs funcName]);
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    Fs = 16000;
+    modeOfOperation = 'narrowband';
     
-    pesq = a0 + a1 * d_sym + a2 * d_asym;
+    if nargin < 4
+        modeOfOperation = 'wideband';
+    end
+    
+    switch lower(modeOfOperation)
+        case 'narrowband'
+            mOp = {''};
+        case 'wideband'
+            mOp = {'+wb'};
+        case 'both'
+            mOp = {'';'+wb'};
+        otherwise
+            error(['''' modeOfOperation ''' is not a recognised ''modeOfOperation'' value.'])
+    end   
+    
+    max_val = max(abs([originalSignal(:); processedSignal(:)]));
+    
+    pesq = zeros(numel(mOp),1);
+    for m = 1:numel(mOp)
+        pesqArgs = {['+' num2str(Fs)], ...
+                             mOp{m}, ...
+                             single(originalSignal / max_val), ...
+                             single(processedSignal / max_val)};
+        pesq(m,:) = pesq_mex_(pesqArgs{~cellfun(@isempty,pesqArgs)});
+    end
+
 end
 
-function d_sym = calculate_distortion_sym(originalSignal, processedSignal)
-    d = originalSignal - processedSignal;
-    d_sym = sum(d.^2) / sum(originalSignal.^2);
-end
-
-function d_asym = calculate_distortion_asym(originalSignal, processedSignal)
-    % Cálculo de la distorsión asimétrica
-  
-    d = originalSignal - processedSignal;
-    d_asym = sum(abs(d)) / sum(abs(originalSignal));
+function classDirs = getClassDirs(FullPath)
+    classDirs = '';
+    classes = strfind(FullPath,'+');
+    for c = 1:length(classes)
+        clas = FullPath(classes(c):end);
+        stp = strfind(clas,filesep);
+       classDirs = [classDirs  clas(2:stp(1)-1) '.'];
+    end
 end
