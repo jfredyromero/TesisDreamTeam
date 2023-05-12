@@ -28,10 +28,6 @@ function pesq = medirPESQ(originalSignal, processedSignal)
     Fs = 16000;
     modeOfOperation = 'narrowband';
     
-    if nargin < 4
-        modeOfOperation = 'wideband';
-    end
-    
     switch lower(modeOfOperation)
         case 'narrowband'
             mOp = {''};
@@ -52,6 +48,7 @@ function pesq = medirPESQ(originalSignal, processedSignal)
                              single(originalSignal / max_val), ...
                              single(processedSignal / max_val)};
         pesq(m,:) = pesq_mex_(pesqArgs{~cellfun(@isempty,pesqArgs)});
+        pesq = 46607/14945 - (2000*log(1/(pesq/4 - 999/4000) - 1))/2989;
     end
 
 end
