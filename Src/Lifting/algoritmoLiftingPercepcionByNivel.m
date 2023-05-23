@@ -9,6 +9,7 @@ addpath('../../Resultados/Lifting/Caracterizacion');
 
 clear;
 close all;
+clc;
 
 
 %% Cargar datos de los porcentajes
@@ -23,11 +24,11 @@ fw = "db1";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 1;
+n = 8;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 16;
+q = 256;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 4;
+cama = 0;
 
 
 %% Lectura de la señal de voz
@@ -123,7 +124,52 @@ if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
 end
 
 % Se asignan los bits en base al aporte de energia de cada coeficiente
-coefBits = coefBits + floor(bitsRestantesPerTrama * porcentajesPercepcion);
+%----------------------------BLOQUE 1---------------------------------
+%AQUI EMPIEZO A ASIGNAR LOS BITS DESDE EL WAVELET MÁS GRANDE HASTA EL MÁS
+%CHIQUITO SEGÚN LOS %, POR ALGÚNA RAZON NO SE ASIGNAN TODOS ENTONCES POR
+%ESO SE HACE EL BLOQUE 2
+for i = 1:length(aux) 
+    m = length(aux{i,1}); 
+    valueGroup = bitsRestantesPerTrama * porcentajesPercepcion(i);
+    coefBits(i) = coefBits(i) + (ceil(valueGroup/m)*m);
+    bitsRestantesPerTrama = sum(coefBits);
+    if bitsRestantesPerTrama < 0
+        break
+    end
+end 
+%------------------SEGUNDO BLOQUE-------------------------
+%COMO SOBRABAN MUCHOS BITS SE REASIGNAN DE TAL MANERA QUE SE LE VAN DANDO
+%BITS A LOS COEFICIENTES CON MÁS RELEVANCIA
+flagValue = false; 
+if sum(coefBits) < bitsMaximosPerTrama
+    [valores_ordenados, ubicaciones_ordenadas] = sort(porcentajesPercepcion, 'descend');
+    flagValue = true; 
+end    
+iii=1; 
+while flagValue
+    %antes de asignar se verifica si alcanza para el numero de muestras que
+    %tiene el coeficiente, sino no se asigna 
+    if bitsMaximosPerTrama-sum(coefBits)>=length(aux{ubicaciones_ordenadas(iii),1})
+        coefBits(ubicaciones_ordenadas(iii)) = coefBits(ubicaciones_ordenadas(iii)) + length(aux{ubicaciones_ordenadas(iii),1});
+        bitsRestantesPerTrama = sum(coefBits);
+        iii=iii+1;
+        if iii==n+1
+            iii=1;
+        end
+%---------------------------TERCER BLOQUE-----------------
+%Asignación de ultimos bits 
+    elseif ((bitsMaximosPerTrama-sum(coefBits) > 0) && bitsMaximosPerTrama-sum(coefBits)<length(aux{ubicaciones_ordenadas(iii),1}))
+        search = bitsMaximosPerTrama-sum(coefBits);
+        tamanos_celdas = cellfun(@(x) x(1), cellfun(@size, aux, 'UniformOutput', false));
+        valores_cercanos = tamanos_celdas(tamanos_celdas <= search);
+        valor_cercano = max(valores_cercanos);
+        location = find(tamanos_celdas == valor_cercano);
+        coefBits(location(1)) = coefBits(location(1)) + length(aux{location(1),1});
+        bitsRestantesPerTrama = sum(coefBits);
+    else
+        flagValue=false;
+    end
+end 
 
 % Si se han asignado más de la totalidad de bits hay un error
 bitsAsignadosPerTrama = sum(coefBits);
@@ -143,6 +189,7 @@ for i = 1:n + 1
     bitsPerMuestra(i) = floor(coefBits(i) / length(aux{i}));
     bitsDesperdiciadosPerNivel(i) = mod(coefBits(i), length(aux{i}));
 end
+
 %---------------------MATRIZ NIVELES DE CUANTIFICACION---------------------
 qPerNivelDescomp = 2.^(bitsPerMuestra);
 

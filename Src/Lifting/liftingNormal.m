@@ -19,7 +19,7 @@ lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
 n = 10;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 256;
+q = 4;
 
 
 %% Lectura de la señal de voz
