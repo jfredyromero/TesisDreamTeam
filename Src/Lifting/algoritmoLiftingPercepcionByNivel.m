@@ -132,7 +132,7 @@ for i = 1:length(aux)
     m = length(aux{i,1}); 
     valueGroup = bitsRestantesPerTrama * porcentajesPercepcion(i);
     coefBits(i) = coefBits(i) + (ceil(valueGroup/m)*m);
-    bitsRestantesPerTrama = sum(coefBits);
+    bitsRestantesPerTrama = bitsRestantesPerTrama - coefBits(i);
     if bitsRestantesPerTrama < 0
         break
     end
@@ -149,23 +149,23 @@ iii=1;
 while flagValue
     %antes de asignar se verifica si alcanza para el numero de muestras que
     %tiene el coeficiente, sino no se asigna 
-    if bitsMaximosPerTrama-sum(coefBits)>=length(aux{ubicaciones_ordenadas(iii),1})
+    if bitsRestantesPerTrama >= length(aux{ubicaciones_ordenadas(iii),1})
         coefBits(ubicaciones_ordenadas(iii)) = coefBits(ubicaciones_ordenadas(iii)) + length(aux{ubicaciones_ordenadas(iii),1});
-        bitsRestantesPerTrama = sum(coefBits);
+        bitsRestantesPerTrama = bitsRestantesPerTrama - length(aux{ubicaciones_ordenadas(iii),1});
         iii=iii+1;
         if iii==n+1
             iii=1;
         end
 %---------------------------TERCER BLOQUE-----------------
 %Asignación de ultimos bits 
-    elseif ((bitsMaximosPerTrama-sum(coefBits) > 0) && bitsMaximosPerTrama-sum(coefBits)<length(aux{ubicaciones_ordenadas(iii),1}))
-        search = bitsMaximosPerTrama-sum(coefBits);
+    elseif ((bitsRestantesPerTrama > 0) && bitsRestantesPerTrama<length(aux{ubicaciones_ordenadas(iii),1}))
+        search = bitsRestantesPerTrama;
         tamanos_celdas = cellfun(@(x) x(1), cellfun(@size, aux, 'UniformOutput', false));
         valores_cercanos = tamanos_celdas(tamanos_celdas <= search);
         valor_cercano = max(valores_cercanos);
         location = find(tamanos_celdas == valor_cercano);
         coefBits(location(1)) = coefBits(location(1)) + length(aux{location(1),1});
-        bitsRestantesPerTrama = sum(coefBits);
+        bitsRestantesPerTrama = bitsRestantesPerTrama - length(aux{location(1),1});
     else
         flagValue=false;
     end
