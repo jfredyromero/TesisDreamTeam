@@ -130,9 +130,9 @@ end
 %ESO SE HACE EL BLOQUE 2
 for i = 1:length(aux) 
     m = length(aux{i,1}); 
-    valueGroup = bitsRestantesPerTrama * porcentajesPercepcion(i);
-    coefBits(i) = coefBits(i) + (ceil(valueGroup/m)*m);
-    bitsRestantesPerTrama = sum(coefBits);
+    valueGroup = bitsMaximosPerTrama * porcentajesPercepcion(i);
+    coefBits(i) = coefBits(i) + (floor(valueGroup/m)*m);
+    bitsRestantesPerTrama = bitsMaximosPerTrama - sum(coefBits);
     if bitsRestantesPerTrama < 0
         break
     end
@@ -151,7 +151,7 @@ while flagValue
     %tiene el coeficiente, sino no se asigna 
     if bitsMaximosPerTrama-sum(coefBits)>=length(aux{ubicaciones_ordenadas(iii),1})
         coefBits(ubicaciones_ordenadas(iii)) = coefBits(ubicaciones_ordenadas(iii)) + length(aux{ubicaciones_ordenadas(iii),1});
-        bitsRestantesPerTrama = sum(coefBits);
+        bitsRestantesPerTrama = bitsMaximosPerTrama - sum(coefBits);
         iii=iii+1;
         if iii==n+1
             iii=1;
@@ -165,7 +165,7 @@ while flagValue
         valor_cercano = max(valores_cercanos);
         location = find(tamanos_celdas == valor_cercano);
         coefBits(location(1)) = coefBits(location(1)) + length(aux{location(1),1});
-        bitsRestantesPerTrama = sum(coefBits);
+        bitsRestantesPerTrama = bitsMaximosPerTrama - sum(coefBits);
     else
         flagValue=false;
     end
