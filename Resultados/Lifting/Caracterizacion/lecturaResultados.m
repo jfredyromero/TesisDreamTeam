@@ -1,6 +1,6 @@
 archivos = dir('*.mat');
 
-promedios = zeros(numel(archivos), 10);
+promedios = zeros(numel(archivos), 11);
 
 for i = 1:numel(archivos)
     % Nombre del archivo actual
@@ -19,10 +19,11 @@ calidadByCoef = 1 - calidad;
 calidadTotal = sum(calidadByCoef, 2);
 calidadPorcentual = calidadByCoef ./ calidadTotal;
 
-columnsNames = cell(1, 10);
+columnsNames = cell(1, 11);
 for i = 1:10
-    columnsNames{i} = "Calidad de coef Wavelet " + (11 - i);
+    columnsNames{i} = "Importancia de coef Wavelet " + (11 - i);
 end
+columnsNames{end} = "Importancia de coef Scaling";
 
 porcentajes = array2table(calidadPorcentual,  'VariableNames', string(columnsNames));
 
