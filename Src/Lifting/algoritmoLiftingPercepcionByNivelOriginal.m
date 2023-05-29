@@ -24,11 +24,11 @@ fw = "db1";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 8;
+n = 2;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
 q = 256;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 0;
+cama = 6;
 
 
 %% Lectura de la señal de voz
@@ -123,20 +123,19 @@ if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
     return;
 end
 
-bed= bitsMaximosPerTrama - sum(coefBits);
 % Se asignan los bits en base al aporte de energia de cada coeficiente
 %----------------------------BLOQUE 1---------------------------------
 %AQUI EMPIEZO A ASIGNAR LOS BITS DESDE EL WAVELET MÁS GRANDE HASTA EL MÁS
 %CHIQUITO SEGÚN LOS %, POR ALGÚNA RAZON NO SE ASIGNAN TODOS ENTONCES POR
 %ESO SE HACE EL BLOQUE 2
 for i = 1:length(aux) 
-    if bitsMaximosPerTrama - sum(coefBits) < length(aux{i,1})
+    m = length(aux{i,1}); 
+    valueGroup = bitsRestantesPerTrama * porcentajesPercepcion(i);
+    coefBits(i) = coefBits(i) + (ceil(valueGroup/m)*m);
+    bitsRestantesPerTrama = bitsMaximosPerTrama-sum(coefBits);
+    if bitsRestantesPerTrama < 0
         break
     end
-    m = length(aux{i,1}); 
-    valueGroup = bed * porcentajesPercepcion(i);
-    coefBits(i) = coefBits(i) + (floor(valueGroup/m)*m);
-    bitsRestantesPerTrama = bitsMaximosPerTrama - sum(coefBits);
 end 
 %------------------SEGUNDO BLOQUE-------------------------
 %COMO SOBRABAN MUCHOS BITS SE REASIGNAN DE TAL MANERA QUE SE LE VAN DANDO
@@ -152,7 +151,7 @@ while flagValue
     %tiene el coeficiente, sino no se asigna 
     if bitsMaximosPerTrama-sum(coefBits)>=length(aux{ubicaciones_ordenadas(iii),1})
         coefBits(ubicaciones_ordenadas(iii)) = coefBits(ubicaciones_ordenadas(iii)) + length(aux{ubicaciones_ordenadas(iii),1});
-        bitsRestantesPerTrama = bitsMaximosPerTrama - sum(coefBits);
+        bitsRestantesPerTrama = bitsMaximosPerTrama-sum(coefBits);
         iii=iii+1;
         if iii==n+1
             iii=1;

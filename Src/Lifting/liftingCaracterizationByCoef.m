@@ -24,7 +24,7 @@ q = 256;
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/6. Veronica Lopez.m4a');
+[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/9. Veronica Lopez.m4a');
 Ts = 1 / Fs;
 
 
@@ -78,7 +78,7 @@ totalCoef = [waveletCoef; scalingCoef];
 
 %% Elimino coeficientes :)
 
-z = 5;
+z = 11;
 
 for i = 1:numTramas
     totalCoef{z, i} = zeros(length(totalCoef{z, i}), 1);

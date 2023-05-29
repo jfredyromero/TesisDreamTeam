@@ -20,20 +20,20 @@ load("porcentajes.mat");
 %% Definicion de variables
 
 %---------------------------FAMILIA WAVELET--------------------------------
-fw = "db1";
+fw = "bior2.6";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 8;
+n = 10;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 256;
+q = 4;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 0;
+cama = 1;
 
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/9. Veronica Lopez.m4a');
+[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/6. Veronica Lopez.m4a');
 Ts = 1 / Fs;
 
 
@@ -100,6 +100,19 @@ end
 
 %----------------------PORCENTAJES DE ENERGÍA------------------------------
 porcentajesPercepcion = table2array(porcentajes)';
+porcentajesPercepcion(1)= 0.042287166;
+porcentajesPercepcion(2)=0.133418043;
+porcentajesPercepcion(3)=0.182871665;
+porcentajesPercepcion(4)=0.21656925;
+porcentajesPercepcion(5)=0.202897078;
+porcentajesPercepcion(6)=0.118424396;
+porcentajesPercepcion(7)=0.049911055;
+porcentajesPercepcion(8)=0.022465057;
+porcentajesPercepcion(9)=0.012198221;
+porcentajesPercepcion(10)=0.009809403;
+porcentajesPercepcion(11)=0.009148666;
+
+
 porcentajesPercepcion = [porcentajesPercepcion(1:length(coefBits) - 1); sum(porcentajesPercepcion(length(coefBits):end))];
 
 %----------CANTIDAD DE BITS ASIGNADOS PARA CADA TRAMA DEL AUDIO------------
@@ -129,18 +142,19 @@ bed= bitsMaximosPerTrama - sum(coefBits);
 %AQUI EMPIEZO A ASIGNAR LOS BITS DESDE EL WAVELET MÁS GRANDE HASTA EL MÁS
 %CHIQUITO SEGÚN LOS %, POR ALGÚNA RAZON NO SE ASIGNAN TODOS ENTONCES POR
 %ESO SE HACE EL BLOQUE 2
-for i = 1:length(aux) 
-    if bitsMaximosPerTrama - sum(coefBits) < length(aux{i,1})
-        break
-    end
-    m = length(aux{i,1}); 
-    valueGroup = bed * porcentajesPercepcion(i);
-    coefBits(i) = coefBits(i) + (floor(valueGroup/m)*m);
-    bitsRestantesPerTrama = bitsMaximosPerTrama - sum(coefBits);
-end 
+% for i = 1:length(aux) 
+%     if bitsMaximosPerTrama - sum(coefBits) < length(aux{i,1})
+%         break
+%     end
+%     m = length(aux{i,1}); 
+%     valueGroup = bed * porcentajesPercepcion(i);
+%     coefBits(i) = coefBits(i) + (round(valueGroup/m)*m);
+%     bitsRestantesPerTrama = bitsMaximosPerTrama - sum(coefBits);
+% end 
 %------------------SEGUNDO BLOQUE-------------------------
 %COMO SOBRABAN MUCHOS BITS SE REASIGNAN DE TAL MANERA QUE SE LE VAN DANDO
 %BITS A LOS COEFICIENTES CON MÁS RELEVANCIA
+%coefBits(1)=(length(aux{1,1}))* (log2(q)-4) ;
 flagValue = false; 
 if sum(coefBits) < bitsMaximosPerTrama
     [valores_ordenados, ubicaciones_ordenadas] = sort(porcentajesPercepcion, 'descend');
@@ -150,11 +164,22 @@ iii=1;
 while flagValue
     %antes de asignar se verifica si alcanza para el numero de muestras que
     %tiene el coeficiente, sino no se asigna 
-    if bitsMaximosPerTrama-sum(coefBits)>=length(aux{ubicaciones_ordenadas(iii),1})
-        coefBits(ubicaciones_ordenadas(iii)) = coefBits(ubicaciones_ordenadas(iii)) + length(aux{ubicaciones_ordenadas(iii),1});
+    m = length(aux{ubicaciones_ordenadas(iii),1});
+    valueGroup = bed * porcentajesPercepcion(ubicaciones_ordenadas(iii));
+    if (ceil(valueGroup/m)*m)<= bitsMaximosPerTrama-sum(coefBits)
+        coefBits(ubicaciones_ordenadas(iii)) = coefBits(ubicaciones_ordenadas(iii)) + (ceil(valueGroup/m)*m);
         bitsRestantesPerTrama = bitsMaximosPerTrama - sum(coefBits);
         iii=iii+1;
-        if iii==n+1
+        if iii==n+2
+            iii=1;
+        end
+
+    elseif bitsMaximosPerTrama-sum(coefBits)>=length(aux{ubicaciones_ordenadas(iii),1})
+        veces = floor((bitsMaximosPerTrama-sum(coefBits))/(length(aux{ubicaciones_ordenadas(iii),1})));
+        coefBits(ubicaciones_ordenadas(iii)) = coefBits(ubicaciones_ordenadas(iii)) + length(aux{ubicaciones_ordenadas(iii),1})*veces;
+        bitsRestantesPerTrama = bitsMaximosPerTrama - sum(coefBits);
+        iii=iii+1;
+        if iii==n+2
             iii=1;
         end
 %---------------------------TERCER BLOQUE-----------------
@@ -235,8 +260,9 @@ for i = 1:numTramas
     senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = ilwt(totalCoefQuant{n + 1, i}, totalCoefQuant(1:n, i), 'LiftingScheme', lsc)'; 
 end
 
-medirPESQ(xn(1:length(senalReconst)), senalReconst')
-medirNMSE(xn(1:length(senalReconst)), senalReconst')
+pesq = ((medirPESQ(xn(1:length(senalReconst)), senalReconst'))+0.5)/5;
+nmse = medirNMSE(xn(1:length(senalReconst)), senalReconst');
+(pesq + nmse) / 2
 
 
 %% Reproducción de la señal reconstruida
