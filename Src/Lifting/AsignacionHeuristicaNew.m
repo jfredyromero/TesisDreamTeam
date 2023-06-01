@@ -133,7 +133,7 @@ for jj = 1:numVariaciones
     end
 
     % Generar variación perturbando los porcentajes iniciales
-    porcentajesVariacion = porcentajesPercepcion + perturbacion * randn(size(porcentajesPercepcion));
+    porcentajesVariacion = porcentajesPercepcion + perturbacion * randn(size(porcentajesPercepcion))
     
     % Normalizar los porcentajes para que sumen 1
     porcentajesVariacion = porcentajesVariacion / sum(porcentajesVariacion);
