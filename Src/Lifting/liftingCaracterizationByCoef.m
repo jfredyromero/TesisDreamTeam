@@ -78,7 +78,7 @@ totalCoef = [waveletCoef; scalingCoef];
 
 %% Elimino coeficientes :)
 
-z = 11;
+z = 1;
 
 for i = 1:numTramas
     totalCoef{z, i} = zeros(length(totalCoef{z, i}), 1);

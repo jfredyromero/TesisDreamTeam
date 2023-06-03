@@ -101,19 +101,24 @@ end
 
 %----------------------PORCENTAJES DE ENERGÍA------------------------------
 
+[valores_ordenados, ubicaciones_ordenadas] = sort(porcentajesPercepcion, 'descend');
+flagValue = true; 
+
 mejorPuntuacion = 0;
+
+
 porcentajesPercepcion = table2array(porcentajes)';
-porcentajesPercepcion(1)= 0.042287166;
-porcentajesPercepcion(2)=0.133418043;
-porcentajesPercepcion(3)=0.182871665;
-porcentajesPercepcion(4)=0.21656925;
-porcentajesPercepcion(5)=0.202897078;
-porcentajesPercepcion(6)=0.118424396;
-porcentajesPercepcion(7)=0.049911055;
-porcentajesPercepcion(8)=0.022465057;
-porcentajesPercepcion(9)=0.012198221;
-porcentajesPercepcion(10)=0.009809403;
-porcentajesPercepcion(11)=0.009148666;
+porcentajesPercepcion(1)= 1/11;
+porcentajesPercepcion(2)=1/11;
+porcentajesPercepcion(3)=1/11;
+porcentajesPercepcion(4)=1/11;
+porcentajesPercepcion(5)=1/11;
+porcentajesPercepcion(6)=1/11;
+porcentajesPercepcion(7)=1/11;
+porcentajesPercepcion(8)=1/11;
+porcentajesPercepcion(9)=1/11;
+porcentajesPercepcion(10)=1/11;
+porcentajesPercepcion(11)=1/11;
 
 % Número de variaciones a generar
 numVariaciones = 20;

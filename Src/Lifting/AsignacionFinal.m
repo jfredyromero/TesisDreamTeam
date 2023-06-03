@@ -25,16 +25,16 @@ fw = "db1";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 10;
+n =2;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 4;
+q = 8;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 1;
+cama = log2(q)-1;
 
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('../../Grabaciones/Hombres/Jerónimo Árce/1. Jerónimo Arce.m4a');
+[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/8. Veronica Lopez.m4a');
 Ts = 1 / Fs;
 
 
@@ -52,7 +52,7 @@ fs = Fs/i;
 %% División de la señal en tramas
 
 %--------------------LONGITUD DE TRAMA EN SEGUNDOS----------------------
-tramaDuration = 0.064; % 64 milisegundos
+tramaDuration = 0.064*(1/2); % 64 milisegundos
 %--------------------LONGITUD DE TRAMA EN MUESTRAS----------------------
 tramaSamples = round(fs * tramaDuration);
 %---------------------------NUMERO DE TRAMAS----------------------------
@@ -100,8 +100,6 @@ for i = 1:n + 1
 end
 
 %----------------------PORCENTAJES DE ENERGÍA------------------------------
-
-mejorPuntuacion = 0;
 porcentajesPercepcion = table2array(porcentajes)';
 porcentajesPercepcion(1)= 0.042287166;
 porcentajesPercepcion(2)=0.133418043;
@@ -115,28 +113,8 @@ porcentajesPercepcion(9)=0.012198221;
 porcentajesPercepcion(10)=0.009809403;
 porcentajesPercepcion(11)=0.009148666;
 
-% Número de variaciones a generar
-numVariaciones = 20;
 
-% Parámetro de perturbación
-perturbacion = 0.01;
-
-% Inicializar mejor porcentaje y su puntuación
-mejorPorcentaje = porcentajesPercepcion;
-
-for jj = 1:numVariaciones
-    
-    coefBits = ones(1, n + 1)' * cama;
-    
-    aux = totalCoef(:, 1);
-    for ii = 1:n + 1
-        coefBits(ii) = length(aux{ii}) * coefBits(ii);
-    end
-
-
-    % Evaluar puntuación de la variación
-
-%porcentajesPercepcion = [porcentajesPercepcion(1:length(coefBits) - 1); sum(porcentajesPercepcion(length(coefBits):end))];
+porcentajesPercepcion = [porcentajesPercepcion(1:length(coefBits) - 1); sum(porcentajesPercepcion(length(coefBits):end))];
 
 %----------CANTIDAD DE BITS ASIGNADOS PARA CADA TRAMA DEL AUDIO------------
 bitsAsignadosPerTrama = sum(coefBits);
@@ -264,7 +242,7 @@ bitsUsados = bitsUsadosPerTrama * 100 / bitsMaximosPerTrama;
 
 %% Cuantificación de los coeficientes totales
 
-%---------------MATRIZ DE LOS COEFICIENTES CUANTIFICADOS-------------------
+% %---------------MATRIZ DE LOS COEFICIENTES CUANTIFICADOS-------------------
 totalCoefQuant = cell([n + 1, numTramas]);
 for i = 1:numel(totalCoef)
     if mod(i, n + 1) == 0
@@ -272,7 +250,8 @@ for i = 1:numel(totalCoef)
     else
         qIndex = mod(i, n + 1);
     end
-    totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, qPerNivelDescomp(qIndex));
+  totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniVNew(totalCoef{i}, qPerNivelDescomp(qIndex));
+%  totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, qPerNivelDescomp(qIndex));
 end
 
 
@@ -285,30 +264,10 @@ end
 
 pesq = ((medirPESQ(xn(1:length(senalReconst)), senalReconst'))+0.5)/5;
 nmse = medirNMSE(xn(1:length(senalReconst)), senalReconst');
-puntuacionVariacion = (pesq + nmse) / 2
-    
+(pesq + nmse) / 2
 
-    if puntuacionVariacion > mejorPuntuacion
-        mejorPorcentaje = porcentajesPercepcion;
-        mejorPuntuacion = puntuacionVariacion;
-    end
-
-    % Generar variación perturbando los porcentajes iniciales
-    porcentajesVariacion = porcentajesPercepcion + perturbacion * randn(size(porcentajesPercepcion));
-    porcentajesVariacion = max(porcentajesVariacion, 0);
-    mejorSenalreconst = senalReconst;
-    %porcentajesVariacion = porcentajesVariacion .* logical(porcentajesVariacion) + porcentajesIniciales .* logical(~porcentajesVariacion);
-    
-    
-    % Normalizar los porcentajes para que sumen 1
-    porcentajesVariacion = porcentajesVariacion / sum(porcentajesVariacion)
-    
-    porcentajesPercepcion = porcentajesVariacion;
-end
 
 %% Reproducción de la señal reconstruida
-%AQUI FALTA VOLVER A SETEAR LOS PORCENTAJES QUE FUERON EXITOSOS Y
-%RECONTRUIR LA SEÑAL CON ESO ANTES DE REPRODUCIR, SOLO PARA ESCUCHAR
 
-sound(mejorSenalreconst, fs);
+sound(senalReconst, fs);
 

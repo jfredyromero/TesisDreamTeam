@@ -20,20 +20,21 @@ load("porcentajes.mat");
 %% Definicion de variables
 
 %---------------------------FAMILIA WAVELET--------------------------------
-fw = "bior2.6";
+%fw = "bior2.6";
+fw = "db1";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 10;
+n =1 ;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 4;
+q = 8;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 1;
+cama = log2(q)-1;
 
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/6. Veronica Lopez.m4a');
+[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/8. Veronica Lopez.m4a');
 Ts = 1 / Fs;
 
 
@@ -241,7 +242,7 @@ bitsUsados = bitsUsadosPerTrama * 100 / bitsMaximosPerTrama;
 
 %% Cuantificación de los coeficientes totales
 
-%---------------MATRIZ DE LOS COEFICIENTES CUANTIFICADOS-------------------
+% %---------------MATRIZ DE LOS COEFICIENTES CUANTIFICADOS-------------------
 totalCoefQuant = cell([n + 1, numTramas]);
 for i = 1:numel(totalCoef)
     if mod(i, n + 1) == 0
@@ -249,9 +250,10 @@ for i = 1:numel(totalCoef)
     else
         qIndex = mod(i, n + 1);
     end
-    totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, qPerNivelDescomp(qIndex));
+  totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniVNew(totalCoef{i}, qPerNivelDescomp(qIndex));
+%  totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, qPerNivelDescomp(qIndex));
 end
-
+%totalCoefQuant = totalCoef; 
 
 %% Reconstrucción de las tramas y de la señal original
 
