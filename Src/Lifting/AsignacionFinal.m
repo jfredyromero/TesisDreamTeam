@@ -25,7 +25,7 @@ fw = "db1";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n =2;
+n =5;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
 q = 8;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
