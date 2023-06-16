@@ -18,14 +18,11 @@ function yc = cuantUniVNew(y, n)
     else
         partition = minimo + escalon:escalon:(minimo + (escalon * (n - 1)));
         codebook = minimo + 0.5 * (escalon):escalon:(minimo + (escalon * (n - 1)) + 0.5 * escalon);
-        % Now optimize, using codebook as an initial guess.
     end
     if isempty(partition) 
         partition = 0 ; 
         codebook = [0, 0];
     end 
-    [partition2, codebook2] = lloyds(y, codebook);
     [index, quants, distor] = quantiz(y, partition, codebook);
-    [index2, quant2, distor2] = quantiz(y, partition2, codebook2);
     yc = quants'; 
 end
