@@ -17,9 +17,9 @@ fw = "db1";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 10;
+n = 6;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
-q = 256;
+q = 8;
 
 
 %% Lectura de la señal de voz
@@ -86,7 +86,7 @@ for i = 1:numel(totalCoef)
     else
         qIndex = mod(i, n + 1);
     end
-    totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, q);
+    totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniVNew(totalCoef{i}, q);
 end
 
 
@@ -97,8 +97,9 @@ for i = 1:numTramas
     senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = ilwt(totalCoefQuant{n + 1, i}, totalCoefQuant(1:n, i), 'LiftingScheme', lsc)'; 
 end
 
-medirPESQ(xn(1:length(senalReconst)), senalReconst')
-medirNMSE(xn(1:length(senalReconst)), senalReconst')
+pesq = ((medirPESQ(xn(1:length(senalReconst)), senalReconst')) + 0.5) / 5;
+nmse = medirNMSE(xn(1:length(senalReconst)), senalReconst');
+(pesq + nmse) / 2
 
 
 %% Reproducción de la señal reconstruida
