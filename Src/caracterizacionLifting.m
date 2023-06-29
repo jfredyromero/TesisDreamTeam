@@ -27,20 +27,20 @@ for i = 1:length(fw)
 end
 
 % Crea los nombres de las columnas
-columnsNames = cell(1, n + 1);
+columnsNames = cell(1, n + 2);
 columnsNames{1} = "Audio";
 for i = 1:n
-    columnsNames{i + 1} = "Calidad con coef Wavelet " + (11 - i) + " eliminado";
+    columnsNames{i + 1} = "Calidad con coef Wavelet " + (n + 1 - i) + " eliminado";
 end
-columnsNames{12} = "Calidad con coef Scaling eliminado";
+columnsNames{n + 2} = "Calidad con coef Scaling eliminado";
 
 % Matriz de resultados de las pruebas
-audioResults = cell(length(audioCell), n + 1);
+audioResults = cell(length(audioCell), n + 2);
 audioResults(:, 1) = audioCell(:, 1);
 
 for f = 1:length(lsc) % Wavelets madre
     tic;
-    disp("===============================================")
+    disp("===============================================");
     disp("Inicio de pruebas de Wavelet " + fw{f});
     for i = 1:length(audioCell) % Audios
         for z = 1:n + 1 % Coeficientes removidos
@@ -51,13 +51,16 @@ for f = 1:length(lsc) % Wavelets madre
             nmse = medirNMSE(originalSignal, processedSignal);
             audioResults{i, z + 1} = (pesq + nmse) / 2;
         end
+        disp("===============================================");
+        disp("Wavelet " + fw{f} + ": Audio #" + i + " finalizado.");
+        disp("===============================================");
     end
-    resultTable = cell2table(audioResults,  'VariableNames', string(columnsNames));
+    resultadosCaracterizacion = cell2table(audioResults,  'VariableNames', string(columnsNames));
 
     % Guarda la tabla con los resultados de las pruebas de los audios
-    save("../Resultados/Lifting/Caracterizacion/wavelet-" + fw{f} + "-caracterization.mat", "resultTable");
+    save("../Resultados/Lifting/Caracterizacion/Perceptiva/wavelet-" + fw{f} + "-caracterization.mat", "resultadosCaracterizacion");
 
     disp("Tardó " + toc + " segundos");
     disp("Final de pruebas de Wavelet " + fw{f});
-    disp("===============================================")
+    disp("===============================================");
 end    
