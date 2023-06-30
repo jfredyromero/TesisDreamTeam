@@ -21,7 +21,7 @@ n = 9;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
 q = 256;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 5;
+cama = 8;
 
 
 %% Lectura de la señal de voz
@@ -90,7 +90,7 @@ for i = 1:numel(totalCoef)
     energiaCoef(indexX, floor((i - 1) / (n + 1)) + 1) = sum(totalCoef{i}.^2);
     % energiaCoef(indexX, floor((i - 1) / (n + 1)) + 1) = (1 / length(totalCoef{i})) * sum(totalCoef{i}.^2);
 end
-totalEnergia = sum(sum(energiaCoef));
+totalEnergia = sum(sum(energiaCoef)); %ENERGÍA EN TODA LA SEÑAL
 
 
 %% Asignación de bits y niveles de cuantificación

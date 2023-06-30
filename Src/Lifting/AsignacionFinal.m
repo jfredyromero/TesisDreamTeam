@@ -21,11 +21,12 @@ load("porcentajes.mat");
 
 %---------------------------FAMILIA WAVELET--------------------------------
 %fw = "bior2.6";
-fw = "db1";
+fw = "db7";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n =5;
+n =2;
+%6 dió un mejor resultado
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
 q = 8;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------

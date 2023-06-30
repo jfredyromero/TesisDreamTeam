@@ -30,3 +30,6 @@ function yc = cuantUniVNew(y, n)
         [index2,quant2,distor2] = quantiz(y,partition2,codebook2);
         yc = quants'; 
 end
+
+%CONTEXTUALIZAR: Se debe explicar el aumento de señalización en para este
+%caso relacionado tambien con el tamaño de la trama

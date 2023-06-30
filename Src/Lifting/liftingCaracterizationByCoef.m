@@ -78,7 +78,7 @@ totalCoef = [waveletCoef; scalingCoef];
 
 %% Elimino coeficientes :)
 
-z = 1;
+z = 6;
 
 for i = 1:numTramas
     totalCoef{z, i} = zeros(length(totalCoef{z, i}), 1);
@@ -92,8 +92,8 @@ for i = 1:numTramas
     senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = ilwt(totalCoef{n + 1, i}, totalCoef(1:n, i), 'LiftingScheme', lsc)'; 
 end
 
-m1 = medirPESQ(xn(1:length(senalReconst)), senalReconst') / 4.639;
-m2 = medirNMSE(xn(1:length(senalReconst)), senalReconst');
+m1 = medirPESQ(xn(1:length(senalReconst)), senalReconst') / 4.639
+m2 = medirNMSE(xn(1:length(senalReconst)), senalReconst')
 
 mTotal = (m1 + m2) / 2
 

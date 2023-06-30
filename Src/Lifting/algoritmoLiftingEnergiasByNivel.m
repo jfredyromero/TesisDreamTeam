@@ -91,7 +91,7 @@ for i = 1:numel(totalCoef)
     % energiaCoef(indexX, floor((i - 1) / (n + 1)) + 1) = (1 / length(totalCoef{i})) * sum(totalCoef{i}.^2);
 end
 promedioEnergia = (1/numTramas) * sum(energiaCoef, 2);
-totalEnergia = sum(promedioEnergia);
+totalEnergia = sum(promedioEnergia); %ENERGÍA POR CADA TRAMA
 
 
 %% Asignación de bits y niveles de cuantificación
