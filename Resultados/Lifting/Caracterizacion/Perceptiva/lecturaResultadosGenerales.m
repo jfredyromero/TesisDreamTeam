@@ -15,7 +15,7 @@ for i = 1:numel(archivos)
     datos = load(fullfile(archivo)); 
     
     % Calcula el promedio de cada columna y guárdalo en la tabla de promedios
-    promedioCoeficientes = mean(datos.resultTable(:, 2:end), 1);
+    promedioCoeficientes = mean(datos.resultadosCaracterizacion(:, 2:end), 1);
     promedios(i, :) = table2array(promedioCoeficientes);
 end
 

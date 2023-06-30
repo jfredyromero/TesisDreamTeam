@@ -7,15 +7,19 @@ archivos = dir('*.mat');
 
 promedios = zeros(numel(archivos), 11);
 
+waveletsNames = cell(1, numel(archivos));
+
 for i = 1:numel(archivos)
     % Nombre del archivo actual
     archivo = archivos(i).name;
+
+    waveletsNames{i} = erase(archivo, ["wavelet-", "-caracterization.mat"]);
 
     % Carga los datos del archivo .mat
     datos = load(fullfile(archivo)); 
     
     % Calcula el promedio de cada columna y guárdalo en la tabla de promedios
-    promedioCoeficientes = mean(datos.resultTable(:, 2:end), 1);
+    promedioCoeficientes = mean(datos.resultadosCaracterizacion(:, 2:end), 1);
     promedios(i, :) = table2array(promedioCoeficientes);
 end
 
@@ -29,6 +33,6 @@ for i = 1:10
 end
 columnsNames{end} = "Importancia de coef Scaling";
 
-porcentajes = array2table(calidadPorcentual,  'VariableNames', string(columnsNames));
+porcentajes = array2table(calidadPorcentual, 'VariableNames', string(columnsNames), 'RowNames', string(waveletsNames));
 
 save("Porcentajes/porcentajesByFamilia.mat", "porcentajes");
