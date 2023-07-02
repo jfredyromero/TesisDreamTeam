@@ -2,7 +2,7 @@
 
 addpath('../../Utilidades/');
 addpath('../../Mediciones/');
-addpath('../../Resultados/Lifting/Caracterizacion');
+addpath('../../Resultados/Lifting/Caracterizacion/Perceptiva/Porcentajes');
 
 
 %% Limpieza de variables
@@ -14,7 +14,7 @@ clc;
 
 %% Cargar datos de los porcentajes
 
-load("porcentajes.mat");
+load("porcentajesGenerales.mat");
 
 
 %% Definicion de variables
@@ -51,7 +51,7 @@ fs = Fs/i;
 %% División de la señal en tramas
 
 %--------------------LONGITUD DE TRAMA EN SEGUNDOS----------------------
-tramaDuration = 0.064; % 64 milisegundos
+tramaDuration = 0.064 * 0.5; % 64 milisegundos
 %--------------------LONGITUD DE TRAMA EN MUESTRAS----------------------
 tramaSamples = round(fs * tramaDuration);
 %---------------------------NUMERO DE TRAMAS----------------------------
@@ -90,10 +90,10 @@ coefBits = ones(n + 1, 1) * cama;
 mejoresCoefBits = coefBits;
 mejorCalidadAlcanzada = 0;
 mejorSenalLograda = 1:numel(tramas);
-porcentajesIniciales = ones(11, 1) * 1/11;
-mejoresPorcentajes = zeros(11, 1);
+porcentajesIniciales = ones(n + 1, 1) * 1 / (n + 1);
+mejoresPorcentajes = zeros(n + 1, 1);
 
-while sum(porcentajesIniciales == mejoresPorcentajes) ~= 11
+while sum(porcentajesIniciales == mejoresPorcentajes) ~= (n + 1)
     %---------------------BITS A UTILIZAR POR MUESTRA--------------------------
     bitsPerSample = log2(q);
     %------------------BITS A UTILIZAR POR TRAMA DEL AUDIO---------------------
@@ -123,8 +123,10 @@ while sum(porcentajesIniciales == mejoresPorcentajes) ~= 11
     
     %-----------------------PORCENTAJES INICIALES------------------------------
     porcentajesIniciales = mejoresPorcentajes;
+    porcentajesIniciales = [porcentajesIniciales(1:length(coefBits) - 1); sum(porcentajesIniciales(length(coefBits):end))];
     %----------------------PORCENTAJES DE PERCEPCION---------------------------
     porcentajesPercepcion = table2array(porcentajes)';
+    porcentajesPercepcion = [porcentajesPercepcion(1:length(coefBits) - 1); sum(porcentajesPercepcion(length(coefBits):end))];
     [valoresOrdenados, ubicacionesOrdenadas] = sort(porcentajesPercepcion, 'descend');
     
     % Se asignan los bits en base al aporte de calidad en la percepcion de cada coeficiente
@@ -262,7 +264,7 @@ while sum(porcentajesIniciales == mejoresPorcentajes) ~= 11
     mejorCalidadAlcanzada = maxCalidadAlcanzada;
     mejorSenalLograda = senalFinal;
     mejoresPorcentajes = coefBits / bitsMaximosPerTrama;
-
+    
 end
 
 mejorCalidadAlcanzada

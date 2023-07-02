@@ -2,7 +2,7 @@
 
 addpath('../../Utilidades/');
 addpath('../../Mediciones/');
-addpath('../../Resultados/Lifting/Caracterizacion');
+addpath('../../Resultados/Lifting/Caracterizacion/Perceptiva/Porcentajes');
 
 
 %% Limpieza de variables
@@ -14,7 +14,7 @@ clc;
 
 %% Cargar datos de los porcentajes
 
-load("porcentajes.mat");
+load("porcentajesGenerales.mat");
 
 
 %% Definicion de variables
@@ -24,7 +24,7 @@ fw = "db1";
 %--------------------------FILTROS LIFTING---------------------------------
 lsc = liftingScheme('Wavelet', fw);
 %--------------------NÚMERO DE NIVELES DE DESCOMPOSICIÓN-------------------
-n = 10;
+n = 9;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
 q = 8;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
@@ -198,7 +198,7 @@ for i = 1:numel(totalCoef)
     else
         qIndex = mod(i, n + 1);
     end
-    totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniVNew(totalCoef{i}, qPerNivelDescomp(qIndex));
+    totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, qPerNivelDescomp(qIndex));
 end
 
 
