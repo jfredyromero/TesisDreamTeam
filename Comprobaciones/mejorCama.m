@@ -2,6 +2,9 @@
 addpath('../Grabaciones/');
 addpath('../Mediciones/');
 addpath('../Src/Lifting/Adaptativo/Functions/');
+addpath('../Resultados/Lifting/Comprobaciones/Mejor Cama/Energia/');
+addpath('../Resultados/Lifting/Comprobaciones/Mejor Cama/Heuristico/');
+addpath('../Resultados/Lifting/Comprobaciones/Mejor Cama/Percepcion/');
 addpath('../Utilidades/');
 
 % Limpieza de variables
@@ -13,7 +16,7 @@ clc;
 load("audioCell.mat");
 
 % Establezco el numero de niveles de descomposición
-n = 10;
+n = 9;
 
 % Establezco el numero de niveles de cuantificación
 q = [4 8 16 32 64];
@@ -31,9 +34,7 @@ for i = 1:length(fw)
 end
 
 % Matriz de resultados de las pruebas
-audioResults = zeros(log2(q(end)) + 1, length(q));
-
-waveletResults = zeros(log2(q(end)) + 1, length(q), length(lsc));
+audioResults = zeros(log2(q(end)) + 1, length(q), length(audioCell));
 
 for f = 1:length(lsc) % Wavelets madre
     disp("===============================================");
@@ -42,19 +43,48 @@ for f = 1:length(lsc) % Wavelets madre
         tic;
         for j = 1:length(q) % Niveles de cuantificación
             for cama = 0:log2(q(j)) % Valor de la cama inicial
-                [~, quality] = quantByPerception(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
-                audioResults(cama + 1, j, i) = quality;
+                try
+                    % [~, quality] = quantByPerception(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
+                    [~, quality] = quantByEnergy(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
+                    % [~, quality] = quantByHeuristic(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
+                    audioResults(cama + 1, j, i) = quality;
+                catch
+                    warning('Problem using function.  Assigning a value of NaN');
+                    audioResults(cama + 1, j, i) = NaN;
+                end
             end                        
         end
         disp("===============================================");
         disp("Wavelet " + fw{f} + ": Audio #" + i + " finalizado. Time elapsed: " + toc);
         disp("===============================================");
     end
-    waveletResults(:, :, f) = mean(audioResults, 3);
+    resultados = mean(audioResults, 3, 'omitnan');
+    % save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Percepcion/" + "wavelet-" + fw{f} + "-results.mat", "resultados");
+    % save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Energia/" + "wavelet-" + fw{f} + "-results.mat", "resultados");
+    save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Heuristico/" + "wavelet-" + fw{f} + "-results.mat", "resultados");
     disp("Final de pruebas de Wavelet " + fw{f} + ".");
     disp("===============================================")
 end
 
+% Carga los archivos de resultados
+% archivos = dir('../Resultados/Lifting/Comprobaciones/Mejor Cama/Percepcion/*.mat');
+% archivos = dir('../Resultados/Lifting/Comprobaciones/Mejor Cama/Energia/*.mat');
+archivos = dir('../Resultados/Lifting/Comprobaciones/Mejor Cama/Heuristico/*.mat');
+
+waveletResults = zeros(log2(q(end)) + 1, length(q), length(lsc));
+
+for i = 1:numel(archivos)
+    % Nombre del archivo actual
+    archivo = archivos(i).name;
+
+    % Carga los datos del archivo .mat
+    datos = load(fullfile(archivo)); 
+    
+    % Guarda los datos en una dimension del siguiente vector
+    waveletResults(:, :, i) = datos.resultados;
+end
+
+% Promedia los resultados y cambia los ceros por NaN
 totalResults = mean(waveletResults, 3);
 totalResults(totalResults == 0) = NaN;
 
@@ -70,16 +100,20 @@ end
 
 % Guarda resultados en un archivo .mat
 resultados = array2table(totalResults,  'VariableNames', string(columnsNames), 'RowNames', string(rowsNames));
-save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Percepcion.mat", "resultados");
+% save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Percepcion.mat", "resultados");
+% save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Energia.mat", "resultados");
+save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Heuristico.mat", "resultados");
 
 % Grafica los resultados
-title('Performance Algoritmo Percepción');
+% title('Performance Algoritmo Percepción');
+% title('Performance Algoritmo Energía');
+title('Performance Algoritmo Heuristico');
 hold on;
 markers = ['-+'; '-*'; '-x'; '-^'; '-o'; '-s'];
 for i = 1:length(q)
-    plot(1:log2(q(end)) + 1, totalResults(:, i), markers(i, :), 'linewidth', 2, 'DisplayName', columnsNames{i});
+    plot(0:log2(q(end)), totalResults(:, i), markers(i, :), 'linewidth', 2, 'DisplayName', columnsNames{i});
 end
-xlabel('Calidad') 
-ylabel('Cama') 
+xlabel('Cama');
+ylabel('Calidad');
 legend;
 hold off;
