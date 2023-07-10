@@ -28,7 +28,7 @@ n = 9;
 %--------------------NÚMERO DE NIVELES DE CUANTIFICACIÓN-------------------
 q = 8;
 %--------------------CAMA INICIAL DE BITS POR MUESTRA----------------------
-cama = 2;
+cama = log2(q) - 1;
 
 
 %% Lectura de la señal de voz

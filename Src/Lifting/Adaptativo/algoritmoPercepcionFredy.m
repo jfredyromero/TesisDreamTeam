@@ -2,7 +2,6 @@
 
 addpath('../../../Utilidades/');
 addpath('../../../Mediciones/');
-addpath('../../../Resultados/Lifting/Caracterizacion/Perceptiva/Porcentajes/');
 
 
 %% Limpieza de variables
@@ -10,11 +9,6 @@ addpath('../../../Resultados/Lifting/Caracterizacion/Perceptiva/Porcentajes/');
 clear;
 close all;
 clc;
-
-
-%% Cargar datos de los porcentajes
-
-load("porcentajesGenerales.mat");
 
 
 %% Definicion de variables
@@ -45,13 +39,13 @@ l = i * floor(length(x) / i);
 x = x(1:l);
 %---------------------------SEÑAL SUBMUESTREADA------------------------------
 xn = downsample(x, i);
-fs = Fs/i;
+fs = Fs / i;
 
 
 %% División de la señal en tramas
 
 %--------------------LONGITUD DE TRAMA EN SEGUNDOS----------------------
-tramaDuration = 0.064 * 0.5; % 64 milisegundos
+tramaDuration = 0.032; % 32 milisegundos
 %--------------------LONGITUD DE TRAMA EN MUESTRAS----------------------
 tramaSamples = round(fs * tramaDuration);
 %---------------------------NUMERO DE TRAMAS----------------------------
@@ -90,124 +84,101 @@ totalCoef = [waveletCoef; scalingCoef];
 bitsPerSample = log2(q);
 %------------------BITS A UTILIZAR POR TRAMA DEL AUDIO---------------------
 bitsMaximosPerTrama = bitsPerSample * tramaSamples;
+%--------------MATRIZ DE BITS ASIGNADOS POR COEFICIENTES-------------------
+coefBits = ones(n + 1, numTramas) * cama;
 %--------------MATRIZ DE TAMAÑO DE CADA GRUPO DE COEFICIENTES--------------
 tamanosCoeficientes = cellfun(@(x) x(1), cellfun(@size, totalCoef(:, 1), 'UniformOutput', false));
-%--------------MATRIZ DE BITS ASIGNADOS POR COEFICIENTES-------------------    
-coefBits = ones(n + 1, 1) * cama; 
-%------------------INICIALIZACION DE MEJORES VARIABLES---------------------
-mejoresCoefBits = coefBits;
-mejorCalidadAlcanzada = 0;
-mejorSenalLograda = 1:numel(tramas);
-mejoresPorcentajes = zeros(n + 1, 1);
-porcentajesIniciales = ones(n + 1, 1) * 1 / (n + 1);
+coefBits = tamanosCoeficientes .* coefBits;
+%------------------------------SEÑAL FINAL---------------------------------
+senalReconst = 1:numel(tramas);
 
 
-while sum(porcentajesIniciales == mejoresPorcentajes) ~= (n + 1)
-    
-    %--------------MATRIZ DE BITS ASIGNADOS POR COEFICIENTES-------------------    
-    mejoresCoefBits = coefBits;
-    coefBits = ones(n + 1, 1) * cama;            
-    coefBits = tamanosCoeficientes .* coefBits;
+for i = 1:numTramas
+
+    %------------------INICIALIZACION DE MEJORES VARIABLES---------------------
+    tic;
+    mejorCalidadAlcanzada = 0;
+    mejoresPorcentajes = zeros(n + 1, 1);
+    porcentajesIniciales = ones(n + 1, 1) * 1 / (n + 1);
+
+    %----------------------PORCENTAJES DE PERCEPCION---------------------------
+    porcentajesPercepcion = zeros(n + 1, 1);
+    totalCoefCopy = totalCoef;
+
+    for j = 1:n + 1
+        totalCoefCopy{j, i} = zeros(length(totalCoefCopy{j, i}), 1);
+        tramaReconstruida = ilwt(totalCoefCopy{n + 1, i}, totalCoefCopy(1:n, i), 'LiftingScheme', lsc)'; 
+        calidadTrama = medirNMSE(tramas(i, :), tramaReconstruida);
+        porcentajesPercepcion(j) = 1 - calidadTrama;
+        totalCoefCopy = totalCoef;
+    end
+
+    porcentajesPercepcion = porcentajesPercepcion / sum(porcentajesPercepcion);
+
+    tramaCoefBits = ones(n + 1, 1) * cama;          
+    tramaCoefBits = tamanosCoeficientes .* tramaCoefBits;
     
     %----------CANTIDAD DE BITS ASIGNADOS PARA CADA TRAMA DEL AUDIO------------
-    bitsAsignadosPerTrama = sum(coefBits);
-    
+    bitsAsignadosPerTrama = sum(tramaCoefBits);
+
     % Si se asignan más de (1024 * cama) bits hay un error
     if(bitsAsignadosPerTrama ~=  tramaSamples * cama)
         error("ERROR: Se asignaron como cama más bits de los esperados");
     end
-    
+
     %----------CANTIDAD DE BITS RESTANTES PARA CADA TRAMA DEL AUDIO------------
     bitsRestantesPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
     
     if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
         error("ERROR: Se asignaron más bits de los disponibles");
     end
-    
-    %-----------------------PORCENTAJES INICIALES------------------------------
-    porcentajesIniciales = mejoresPorcentajes;
-    porcentajesIniciales = [porcentajesIniciales(1:length(coefBits) - 1); sum(porcentajesIniciales(length(coefBits):end))];
-
-    %----------------------PORCENTAJES DE PERCEPCION---------------------------
-    porcentajesPercepcion = table2array(porcentajes)';
-    porcentajesPercepcion = [porcentajesPercepcion(1:length(coefBits) - 1); sum(porcentajesPercepcion(length(coefBits):end))];
-    
-    % Se asignan los bits en base al aporte de calidad en la percepcion de cada coeficiente
-    coefBits = coefBits + floor(bitsRestantesPerTrama * porcentajesIniciales);
-    coefBits = floor(coefBits ./ tamanosCoeficientes) .* tamanosCoeficientes;
 
     % Distribución inteligente de bits para que no sobre ninguno
-    coefBits = bitDistributor(coefBits, porcentajesPercepcion, tamanosCoeficientes, bitsMaximosPerTrama);
-    
+    tramaCoefBits = bitDistributor(tramaCoefBits, porcentajesPercepcion, tamanosCoeficientes, bitsMaximosPerTrama);
+    coefBits(:, i) = tramaCoefBits;
+
     % Si se han asignado más de la totalidad de bits hay un error
-    bitsAsignadosPerTrama = sum(coefBits);
-    bitsDesperdiciadosPerTrama = bitsMaximosPerTrama - bitsAsignadosPerTrama;
+    bitsAsignadosPerTrama = sum(tramaCoefBits);
     if(bitsAsignadosPerTrama > bitsMaximosPerTrama)
         error("ERROR: Se asignaron más bits de los disponibles");
     end
-    
+
     %-------------------BITS A UTILIZAR POR CADA MUESTRA-----------------------
-    bitsPerMuestra = floor(coefBits ./ tamanosCoeficientes);
+    bitsPerMuestra = floor(tramaCoefBits ./ tamanosCoeficientes);
     %----------------------BITS SOBRANTES POR MUESTRA--------------------------
-    bitsDesperdiciadosPerNivel = mod(coefBits, tamanosCoeficientes);
+    bitsDesperdiciadosPerNivel = mod(tramaCoefBits, tamanosCoeficientes);
     
     % Si la suma de bits desperdiciados por nivel es mayor a cero significa que
     % no se estan asignando la totalidad de bits.
     if sum(bitsDesperdiciadosPerNivel) ~= 0
         error("ERROR: Se han desperdiciado bits");
     end
-    
+
     %---------------------MATRIZ NIVELES DE CUANTIFICACION---------------------
     qPerNivelDescomp = 2.^(bitsPerMuestra);
-    
-    
+
+
     %% Cuantificación de los coeficientes totales
-    
+        
     %---------------MATRIZ DE LOS COEFICIENTES CUANTIFICADOS-------------------
-    totalCoefQuant = cell([n + 1, numTramas]);
-    for i = 1:numel(totalCoef)
-        if mod(i, n + 1) == 0
-            qIndex = n + 1;
-        else
-            qIndex = mod(i, n + 1);
-        end
-        totalCoefQuant{qIndex, floor((i - 1) / (n + 1)) + 1} = cuantUniV(totalCoef{i}, qPerNivelDescomp(qIndex));
+    tramaCoefQuant = cell([n + 1, 1]);
+    for j = 1:n + 1
+        tramaCoefQuant{j} = cuantUniV(totalCoef{j, i}, qPerNivelDescomp(j));
     end
-    
-    
+
+
     %% Reconstrucción de las tramas y de la señal original
     
-    senalReconst = 1:numel(tramas);
-    for i = 1:numTramas
-        senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = ilwt(totalCoefQuant{n + 1, i}, totalCoefQuant(1:n, i), 'LiftingScheme', lsc)'; 
-    end
-    
-    pesq = ((medirPESQ(xn(1:length(senalReconst)), senalReconst')) + 0.5) / 5;
-    nmse = medirNMSE(xn(1:length(senalReconst)), senalReconst');
-    maxCalidadAlcanzada = (pesq + nmse) / 2;
-    mejorSenalLograda = senalReconst;
-    
-    % Optimización de los porcentajes de forma heuristica
-    [coefBits, maxCalidadAlcanzada, bestSignal] = heuristicOptimizer(coefBits, porcentajesPercepcion, tamanosCoeficientes, totalCoef, maxCalidadAlcanzada, mejorSenalLograda, lsc, xn(1:length(senalReconst)));
-
-    % Si la maxima calidad alcanzada en la iteracion actual es menor que la
-    %   mayor calidad alcanza en iteraciones pasadas, entonces deja de optimizar
-    if mejorCalidadAlcanzada > maxCalidadAlcanzada
-        break;
-    end
-
-    % Ya que se encontró una nueva maxima calidad, se actualizan las
-    %   mejores variables
-    mejorCalidadAlcanzada = maxCalidadAlcanzada;
-    mejorSenalLograda = bestSignal;
-    mejoresPorcentajes = coefBits / bitsMaximosPerTrama;
-    
+    tramaCoefReconst = ilwt(tramaCoefQuant{n + 1}, tramaCoefQuant(1:n), 'LiftingScheme', lsc)';
+    senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = tramaCoefReconst;
+    disp("Trama #" + i + " procesada. Time elapsed: " + toc);
 end
 
-calidadTotal = mejorCalidadAlcanzada
+pesq = ((medirPESQ(xn(1:length(senalReconst)), senalReconst')) + 0.5) / 5;
+nmse = medirNMSE(xn(1:length(senalReconst)), senalReconst');
+calidadTotal = (pesq + nmse) / 2
 
 
 %% Reproducción de la señal reconstruida
 
-sound(bestSignal, fs);
-
+sound(senalReconst, fs);
