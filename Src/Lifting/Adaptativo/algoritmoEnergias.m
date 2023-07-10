@@ -94,16 +94,10 @@ senalReconst = 1:numel(tramas);
 
 
 for i = 1:numTramas
-
-    %------------------INICIALIZACION DE MEJORES VARIABLES---------------------
-    tic;
-    mejorCalidadAlcanzada = 0;
-    mejoresPorcentajes = zeros(n + 1, 1);
-    porcentajesIniciales = ones(n + 1, 1) * 1 / (n + 1);
-
-
+    
     %% Cálculo de la energía de los coeficientes
-
+    
+    tic;
     energiaCoef = zeros(n + 1, 1);
     for j = 1:n + 1
         energiaCoef(j) = sum(totalCoef{j, i}.^2);

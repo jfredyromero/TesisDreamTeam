@@ -95,13 +95,8 @@ senalReconst = 1:numel(tramas);
 
 for i = 1:numTramas
 
-    %------------------INICIALIZACION DE MEJORES VARIABLES---------------------
-    tic;
-    mejorCalidadAlcanzada = 0;
-    mejoresPorcentajes = zeros(n + 1, 1);
-    porcentajesIniciales = ones(n + 1, 1) * 1 / (n + 1);
-
     %----------------------PORCENTAJES DE PERCEPCION---------------------------
+    tic;
     porcentajesPercepcion = zeros(n + 1, 1);
     totalCoefCopy = totalCoef;
 
@@ -182,3 +177,4 @@ calidadTotal = (pesq + nmse) / 2
 %% Reproducción de la señal reconstruida
 
 sound(senalReconst, fs);
+
