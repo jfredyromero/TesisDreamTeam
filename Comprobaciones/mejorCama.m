@@ -15,6 +15,14 @@ clc;
 % Cargar datos de los audios previamente almacenados
 load("audioCell.mat");
 
+% Tipo de algoritmo
+energia = "Energia";
+percepcion = "Percepcion";
+heuristico = "Heuristico";
+
+% Establezco el algoritmo por correr
+algoritmo = heuristico;
+
 % Establezco el numero de niveles de descomposición
 n = 9;
 
@@ -44,9 +52,16 @@ for f = 1:length(lsc) % Wavelets madre
         for j = 1:length(q) % Niveles de cuantificación
             for cama = 0:log2(q(j)) % Valor de la cama inicial
                 try
-                    % [~, quality] = quantByPerception(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
-                    [~, quality] = quantByEnergy(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
-                    % [~, quality] = quantByHeuristic(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
+                    switch algoritmo
+                        case energia
+                            [~, quality] = quantByEnergy(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
+                        case percepcion
+                            [~, quality] = quantByPerception(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
+                        case heuristico
+                            [~, quality] = quantByHeuristic(audioCell{i, 2}, n, q(j), td, cama, lsc{f});
+                        otherwise
+                            error("ERROR: No valid option");
+                    end
                     audioResults(cama + 1, j, i) = quality;
                 catch
                     warning('Problem using function.  Assigning a value of NaN');
@@ -59,17 +74,13 @@ for f = 1:length(lsc) % Wavelets madre
         disp("===============================================");
     end
     resultados = mean(audioResults, 3, 'omitnan');
-    % save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Percepcion/" + "wavelet-" + fw{f} + "-results.mat", "resultados");
-    % save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Energia/" + "wavelet-" + fw{f} + "-results.mat", "resultados");
-    save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Heuristico/" + "wavelet-" + fw{f} + "-results.mat", "resultados");
+    save("../Resultados/Lifting/Comprobaciones/Mejor Cama/" + algoritmo + "/wavelet-" + fw{f} + "-results.mat", "resultados");
     disp("Final de pruebas de Wavelet " + fw{f} + ".");
     disp("===============================================")
 end
 
 % Carga los archivos de resultados
-% archivos = dir('../Resultados/Lifting/Comprobaciones/Mejor Cama/Percepcion/*.mat');
-% archivos = dir('../Resultados/Lifting/Comprobaciones/Mejor Cama/Energia/*.mat');
-archivos = dir('../Resultados/Lifting/Comprobaciones/Mejor Cama/Heuristico/*.mat');
+archivos = dir('../Resultados/Lifting/Comprobaciones/Mejor Cama/' + algoritmo + '/*.mat');
 
 waveletResults = zeros(log2(q(end)) + 1, length(q), length(lsc));
 
@@ -77,8 +88,11 @@ for i = 1:numel(archivos)
     % Nombre del archivo actual
     archivo = archivos(i).name;
 
+    % Nombre del parent folder
+    folder = archivos(i).folder;
+
     % Carga los datos del archivo .mat
-    datos = load(fullfile(archivo)); 
+    datos = load(fullfile(folder, archivo)); 
     
     % Guarda los datos en una dimension del siguiente vector
     waveletResults(:, :, i) = datos.resultados;
@@ -100,14 +114,10 @@ end
 
 % Guarda resultados en un archivo .mat
 resultados = array2table(totalResults,  'VariableNames', string(columnsNames), 'RowNames', string(rowsNames));
-% save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Percepcion.mat", "resultados");
-% save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Energia.mat", "resultados");
-save("../Resultados/Lifting/Comprobaciones/Mejor Cama/Heuristico.mat", "resultados");
+save("../Resultados/Lifting/Comprobaciones/Mejor Cama/" + algoritmo + ".mat", "resultados");
 
 % Grafica los resultados
-% title('Performance Algoritmo Percepción');
-% title('Performance Algoritmo Energía');
-title('Performance Algoritmo Heuristico');
+title('Performance Algoritmo ' + algoritmo);
 hold on;
 markers = ['-+'; '-*'; '-x'; '-^'; '-o'; '-s'];
 for i = 1:length(q)
