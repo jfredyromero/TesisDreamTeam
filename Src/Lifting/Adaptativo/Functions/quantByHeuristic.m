@@ -65,11 +65,8 @@ function [quantSignal, quality] = quantByHeuristic(signal, n, q, td, cama, lsc)
     bitsPerSample = log2(q);
     %------------------BITS A UTILIZAR POR TRAMA DEL AUDIO---------------------
     bitsMaximosPerTrama = bitsPerSample * tramaSamples;
-    %--------------MATRIZ DE BITS ASIGNADOS POR COEFICIENTES-------------------
-    coefBits = ones(n + 1, numTramas) * cama;
     %--------------MATRIZ DE TAMAÑO DE CADA GRUPO DE COEFICIENTES--------------
     tamanosCoeficientes = cellfun(@(x) x(1), cellfun(@size, totalCoef(:, 1), 'UniformOutput', false));
-    coefBits = tamanosCoeficientes .* coefBits;
     %------------------------------SEÑAL FINAL---------------------------------
     senalReconst = 1:numel(tramas);
 
@@ -170,7 +167,6 @@ function [quantSignal, quality] = quantByHeuristic(signal, n, q, td, cama, lsc)
     
             % Ya que se encontró una nueva maxima calidad, se actualizan las
             %   mejores variables
-            coefBits(:, i) = tramaCoefBits;
             senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = bestTrama;
             mejorCalidadAlcanzada = maxCalidadAlcanzada;
             mejoresPorcentajes = tramaCoefBits / bitsMaximosPerTrama;

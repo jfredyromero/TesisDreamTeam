@@ -5,6 +5,8 @@
 function nmse = medirNMSE(originalSignal, processedSignal)
     % originalSignal es la señal original
     % processedSignal es la señal procesada
+    originalSignal = originalSignal/max(abs(originalSignal));
+    processedSignal = processedSignal/max(abs(processedSignal));
     
     numerator = sum((originalSignal - processedSignal).^2);
     denominator = sum(originalSignal.^2);
