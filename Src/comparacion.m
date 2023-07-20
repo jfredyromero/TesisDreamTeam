@@ -98,3 +98,28 @@ totalResults = audioResults / length(audioCell);
 % Guarda resultados en un archivo .mat
 resultados = array2table(totalResults,  'VariableNames', string(columnsNames), 'RowNames', string(rowsNames));
 save("../Resultados/Comparacion/" + algoritmo + ".mat", "resultados");
+
+% Carga los archivos de resultados
+resultadosMallat = table2array(load('../Resultados/Comparacion/' + mallat + '.mat').resultados);
+resultadosLifting = table2array(load('../Resultados/Comparacion/' + lifting + '.mat').resultados);
+
+% Promedia los resultados
+totalResults = zeros(n, 2);
+totalResults(:, 1) = mean(resultadosMallat, 2);
+totalResults(:, 2) = mean(resultadosLifting, 2);
+
+algorithmNames = cell(1, 2);
+algorithmNames{1} = mallat;
+algorithmNames{2} = lifting;
+
+% Grafica los resultados
+title('Mallat vs Lifting');
+hold on;
+markers = ['-+'; '-*'; '-x'; '-^'; '-o'; '-s'];
+for i = 1:length(algorithmNames)
+    plot(1:n, totalResults(:, i), markers(i, :), 'linewidth', 2, 'DisplayName', algorithmNames{i});
+end
+xlabel('Niveles de Descomposición');
+ylabel('Calidad');
+legend;
+hold off;
