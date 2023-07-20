@@ -161,7 +161,7 @@ function [quantSignal, quality] = quantByHeuristic(signal, n, q, td, cama, lsc)
     
             % Si la maxima calidad alcanzada en la iteracion actual es menor que la
             %   mayor calidad alcanza en iteraciones pasadas, entonces deja de optimizar
-            if mejorCalidadAlcanzada > maxCalidadAlcanzada
+            if mejorCalidadAlcanzada >= maxCalidadAlcanzada
                 break;
             end
     
