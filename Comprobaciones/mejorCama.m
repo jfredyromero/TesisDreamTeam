@@ -118,10 +118,11 @@ save("../Resultados/Lifting/Comprobaciones/Mejor Cama/" + algoritmo + ".mat", "r
 
 % Grafica los resultados
 title('Performance Algoritmo ' + algoritmo);
+grid on;
+grid minor;
 hold on;
-markers = ['-+'; '-*'; '-x'; '-^'; '-o'; '-s'];
 for i = 1:length(q)
-    plot(0:log2(q(end)), totalResults(:, i), markers(i, :), 'linewidth', 2, 'DisplayName', columnsNames{i});
+    plot(0:log2(q(end)), totalResults(:, i), 'linewidth', 2.5, 'DisplayName', columnsNames{i});
 end
 xlabel('Cama');
 ylabel('Calidad');
