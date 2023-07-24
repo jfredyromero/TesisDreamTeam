@@ -114,10 +114,11 @@ algorithmNames{2} = lifting;
 
 % Grafica los resultados
 title('Mallat vs Lifting');
+grid on;
+grid minor;
 hold on;
-markers = ['-+'; '-*'; '-x'; '-^'; '-o'; '-s'];
 for i = 1:length(algorithmNames)
-    plot(1:n, totalResults(:, i), markers(i, :), 'linewidth', 2, 'DisplayName', algorithmNames{i});
+    plot(1:n, totalResults(:, i), 'linewidth', 2.5, 'DisplayName', algorithmNames{i});
 end
 xlabel('Niveles de Descomposición');
 ylabel('Calidad');
