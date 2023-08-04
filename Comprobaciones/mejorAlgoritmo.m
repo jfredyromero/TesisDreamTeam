@@ -21,10 +21,10 @@ percepcion = "Percepcion";
 heuristico = "Heuristico";
 
 % Establezco el algoritmo por correr
-algoritmo = energia;
+algoritmo = heuristico;
 
 % Establezco el numero de niveles de descomposición
-n = 9;
+n = 2;
 
 % Establezco el numero de niveles de cuantificación
 q = [4 8 16 32 64];
@@ -80,7 +80,7 @@ for f = 1:length(lsc) % Wavelets madre
     disp("===============================================")
 end
 
-algoritmos = [energia, percepcion];
+algoritmos = [percepcion, energia, heuristico];
 totalResults = zeros(length(algoritmos), length(q));
 
 for algo = 1:length(algoritmos)
@@ -122,10 +122,14 @@ resultados = array2table(totalResults,  'VariableNames', string(columnsNames), '
 save("../Resultados/Lifting/Comprobaciones/Mejor Algoritmo/MejorAlgoritmoN=" + n + ".mat", "resultados");
 
 % Grafica los resultados
-title('Performance Mejor Algoritmo N = ' + string(n));
+title('Mejor Algoritmo con ' + string(n) + ' Niveles de Descomposición');
+grid on;
+grid minor;
+set(gca, 'XScale', 'log');
+set(gca,'xtick', q);
 hold on;
 for i = 1:length(algoritmos)
-    plot(1:length(q), totalResults(i, :), 'linewidth', 2.5, 'DisplayName', rowsNames{i});
+    plot(q, totalResults(i, :), 'linewidth', 2.5, 'DisplayName', rowsNames{i});
 end
 xlabel('Nivel de Cuantificación');
 ylabel('Calidad');
