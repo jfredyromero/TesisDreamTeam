@@ -120,7 +120,9 @@ hold on;
 for i = 1:length(algorithmNames)
     plot(1:n, totalResults(:, i), 'linewidth', 2.5, 'DisplayName', algorithmNames{i});
 end
-xlabel('Niveles de Descomposición');
+ax = gca;
+ax.FontSize = 14;
+xlabel('Niveles de Resolución');
 ylabel('Calidad');
 legend;
 hold off;
