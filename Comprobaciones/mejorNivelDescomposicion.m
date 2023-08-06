@@ -37,7 +37,6 @@ td = 0.064;
 
 % Familias Wavelet por analizar
 fw = {'db1', 'db7', 'sym6', 'bior5.5', 'bior6.8', 'rbio4.4'};
-fw = {'db7'};
 
 % Creación de los filtros para cada familia Wavelet
 lsc = cell(1, length(fw));
@@ -108,7 +107,7 @@ totalResults(totalResults == 0) = NaN;
 
 columnsNames = cell(1, length(q));
 for i = 1:length(q)
-    columnsNames{i} = "q = " + q(i);
+    columnsNames{i} = "M = " + q(i);
 end
 
 rowsNames = cell(log2(q(end)), 1);
@@ -121,14 +120,40 @@ resultados = array2table(totalResults,  'VariableNames', string(columnsNames), '
 save("../Resultados/Lifting/Comprobaciones/Mejor Nivel Descomposicion/" + algoritmo + ".mat", "resultados");
 
 % Grafica los resultados
-title('Performance Algoritmo ' + algoritmo);
-grid on;
+tiledlayout(1, 2);
+
+nexttile;
+title('Calidad Según el Nivel de Resolución CRR ' + algoritmo);
 grid minor;
 hold on;
 for i = 1:length(q)
-    plot(1:n, totalResults(:, i), 'linewidth', 2.5, 'DisplayName', columnsNames{i});
+    plot(1:n, totalResults(:, i), 'linewidth', 3, 'DisplayName', columnsNames{i});
 end
-xlabel('Nivel de Descomposición');
-ylabel('Calidad');
+ax = gca;
+ax.FontSize = 18;
+xlabel('Nivel de Resolución');
+ylabel('Calidad Absoluta');
 legend;
 hold off;
+
+nexttile;
+finalTable = zeros(5, 3);
+M = max(totalResults); %valores máximos de cada fila
+finalTable(:, 1) = M;
+M = repelem(M, 9); 
+M = reshape(M, 9, 5);
+m = min(totalResults); %valores mínimos de cada fila
+finalTable(:, 2) = m;
+m = repelem(m, 9); 
+m = reshape(m, 9, 5);
+finalTable(:, 3) = std(totalResults);
+rpn = (totalResults - m) ./ (M - m); %resultados normalizados por cada fila
+plot(rpn, 'LineWidth', 3);
+legend(columnsNames);
+title('Calidad Según el Nivel de Resolución CRR ' + algoritmo);
+grid minor;
+ax = gca;
+ax.FontSize = 18;
+xlabel('Nivel de Resolución');
+ylabel('Calidad Relativa');
+set(gcf,'color','w');
