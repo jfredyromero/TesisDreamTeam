@@ -10,9 +10,10 @@ colormap(parula(10))
 set(gcf,'color','w');
 h.XDisplayLabels = {'0','1','2','3','4','5','6'};
 h.YDisplayLabels = {'2','3','4','5','6'};
-title('Calidad Según la Distribución de Bits CRR E')
-xlabel('Bits de reserva')
-ylabel('Bits disponibles')
+h.FontSize = 14;
+title('Calidad Según la Distribución de Bits CRR Energía');
+xlabel('Bits de Reserva')
+ylabel('Bits Disponibles por Muestra')
 
 %%  resultados percepción
 rp = load("Percepcion.mat");
@@ -26,12 +27,13 @@ colormap(parula(10))
 set(gcf,'color','w');
 h.XDisplayLabels = {'0','1','2','3','4','5','6'};
 h.YDisplayLabels = {'2','3','4','5','6'};
-title('Calidad Según la Distribución de Bits CRR P')
-xlabel('Bits de reserva')
-ylabel('Bits disponibles')
+h.FontSize = 14;
+title('Calidad Según la Distribución de Bits CRR Percepción')
+xlabel('Bits de Reserva')
+ylabel('Bits Disponibles por Muestra')
 
 %%  resultados heurístico
-rh = load("Percepcion.mat");
+rh = load("Heuristico.mat");
 rh = rh.resultados;
 rh = table2array(rh); %se deja la tabla como una matriz
 rh = rh'; 
@@ -42,6 +44,7 @@ colormap(parula(10))
 set(gcf,'color','w');
 h.XDisplayLabels = {'0','1','2','3','4','5','6'};
 h.YDisplayLabels = {'2','3','4','5','6'};
-title('Calidad Según la Distribución de Bits CRR H')
-xlabel('Bits de reserva')
-ylabel('Bits disponibles')
+h.FontSize = 14;
+title('Calidad Según la Distribución de Bits CRR Heurístico')
+xlabel('Bits de Reserva')
+ylabel('Bits Disponibles por Muestra')
