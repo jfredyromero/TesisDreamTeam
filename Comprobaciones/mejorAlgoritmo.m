@@ -122,7 +122,7 @@ resultados = array2table(totalResults,  'VariableNames', string(columnsNames), '
 save("../Resultados/Lifting/Comprobaciones/Mejor Algoritmo/MejorAlgoritmoN=" + n + ".mat", "resultados");
 
 % Grafica los resultados
-title('Mejor Algoritmo con ' + string(n) + ' Niveles de Descomposición');
+title('Mejor Algoritmo con ' + string(n) + ' Niveles de Resolución');
 grid on;
 grid minor;
 set(gca, 'XScale', 'log');
@@ -131,6 +131,8 @@ hold on;
 for i = 1:length(algoritmos)
     plot(q, totalResults(i, :), 'linewidth', 2.5, 'DisplayName', rowsNames{i});
 end
+ax = gca;
+ax.FontSize = 14;
 xlabel('Nivel de Cuantificación');
 ylabel('Calidad');
 legend;
