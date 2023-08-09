@@ -1,13 +1,15 @@
 %% Importación de funciones
 
-addpath('../../Utilidades/');
-addpath('../../Mediciones/');
+addpath('../../../Utilidades/');
+addpath('../../../Mediciones/');
+addpath('../../Mallat/');
 
 
 %% Limpieza de variables
 
 clear;
 close all;
+clc;
 
 
 %% Definicion de variables
@@ -18,7 +20,7 @@ q = 8;
 
 %% Lectura de la señal de voz
 
-[x, Fs] = audioread('../../Grabaciones/Mujeres/Veronica Lopez/9. Veronica Lopez.m4a');
+[x, Fs] = audioread('../../../Grabaciones/Mujeres/Veronica Lopez/9. Veronica Lopez.m4a');
 Ts = 1 / Fs;
 
 
@@ -30,7 +32,7 @@ l = i * floor(length(x) / i);
 x = x(1:l);
 %---------------------------SEÑAL SUBMUESTREADA------------------------------
 xn = downsample(x, i);
-fs = Fs/i;
+fs = Fs / i;
 
 
 %% División de la señal en tramas
@@ -49,17 +51,24 @@ for i = 1:numTramas
     tramas(i, :) = xn(inicio:fin);
 end
 
-
-%% Cuantificación y reconstrucción de las tramas y de la señal original
-
+%------------------------------SEÑAL FINAL---------------------------------
 senalReconst = 1:numel(tramas);
+
 for i = 1:numTramas
-    senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = cuantUniVNew(tramas(i, :), q)'; 
+    %% Cuantificación de las tramas
+        
+    tic;
+    tramaCoefReconst = cuantUniV(tramas(i, :), q)';
+
+    %% Reconstrucción de las tramas y de la señal original
+    
+    senalReconst(((i - 1) * tramaSamples) + 1:tramaSamples * i) = tramaCoefReconst;
+    disp("Trama #" + i + " procesada. Time elapsed: " + toc);
 end
 
 pesq = ((medirPESQ(xn(1:length(senalReconst)), senalReconst')) + 0.5) / 5;
 nmse = medirNMSE(xn(1:length(senalReconst)), senalReconst');
-(pesq + nmse) / 2
+calidadTotal = (pesq + nmse) / 2
 
 
 %% Reproducción de la señal reconstruida

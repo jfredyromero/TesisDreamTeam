@@ -1,10 +1,7 @@
 % Importación de funciones
 addpath('../Grabaciones/');
 addpath('../Mediciones/');
-addpath('../Src/Lifting/Adaptativo/Functions/');
-addpath('../Resultados/Lifting/Comprobaciones/Mejor Cama/Energia/');
-addpath('../Resultados/Lifting/Comprobaciones/Mejor Cama/Heuristico/');
-addpath('../Resultados/Lifting/Comprobaciones/Mejor Cama/Percepcion/');
+addpath('../Src/Tiempo/Tradicional/Functions/');
 addpath('../Utilidades/');
 
 % Limpieza de variables
@@ -15,13 +12,18 @@ clc;
 % Cargar datos de los audios previamente almacenados
 load("audioCell.mat");
 
-% Tipo de algoritmo
-energia = "Energia";
-percepcion = "Percepcion";
-heuristico = "Heuristico";
+% Tipos de algoritmo
+mallat = "Mallat";
+lifting = "Lifting";
+tiempo = "Tiempo";
 
-% Establezco el algoritmo por correr
-algoritmo = heuristico;
+% Establezco el algoritmo
+algoritmo = tiempo;
+
+% Añado el path del algoritmo
+if algoritmo ~= tiempo
+    addpath('../Src/' + algoritmo + '/Adaptativo/Functions/');
+end
 
 % Establezco el numero de niveles de descomposición
 n = 2;
@@ -40,8 +42,19 @@ fw = {'db1', 'db7', 'sym6', 'bior5.5', 'bior6.8', 'rbio4.4'};
 
 % Creación de los filtros para cada familia Wavelet
 lsc = cell(1, length(fw));
-for i = 1:length(fw) 
-    lsc{i} = liftingScheme('Wavelet', fw{i});
+for i = 1:length(fw)
+    switch algoritmo
+        case mallat
+            [ha, ga, hs, gs] = wfilters(fw{i});
+            lsc{i} = [ha; ga; hs; gs];
+        case lifting
+            lsc{i} = liftingScheme('Wavelet', fw{i});
+        case tiempo
+            continue;
+        otherwise
+            error("ERROR: No valid option");
+    end
+    
 end
 
 % Matriz de resultados de las pruebas
@@ -55,12 +68,12 @@ for f = 1:length(lsc) % Wavelets madre
         for j = 1:length(q) % Niveles de cuantificación
             try
                 switch algoritmo
-                    case energia
-                        [~, quality] = quantByEnergy(audioCell{i, 2}, n, q(j), td, cama(j), lsc{f});
-                    case percepcion
+                    case mallat
+                        [~, quality] = quantByPerception(audioCell{i, 2}, n, q(j), td, cama(j), lsc{f}(1, :), lsc{f}(2, :), lsc{f}(3, :), lsc{f}(4, :));
+                    case lifting
                         [~, quality] = quantByPerception(audioCell{i, 2}, n, q(j), td, cama(j), lsc{f});
-                    case heuristico
-                        [~, quality] = quantByHeuristic(audioCell{i, 2}, n, q(j), td, cama(j), lsc{f});
+                    case tiempo
+                        [~, quality] = quantByTime(audioCell{i, 2}, q(j), td);
                     otherwise
                         error("ERROR: No valid option");
                 end
@@ -75,17 +88,17 @@ for f = 1:length(lsc) % Wavelets madre
         disp("===============================================");
     end
     resultados = mean(audioResults, 'omitnan');
-    save("../Resultados/Lifting/Comprobaciones/Mejor Algoritmo/" + algoritmo + "/n=" + n + "/wavelet-" + fw{f} + "-results.mat", "resultados");
+    save("../Resultados/Comparacion/Mejor Algoritmo/" + algoritmo + "/wavelet-" + fw{f} + "-results.mat", "resultados");
     disp("Final de pruebas de Wavelet " + fw{f} + ".");
     disp("===============================================")
 end
 
-algoritmos = [percepcion, energia, heuristico];
-totalResults = zeros(length(algoritmos), length(q));
+algoritmos = [mallat, lifting, tiempo];
+totalResults = zeros(6, length(q), length(algoritmos));
 
 for algo = 1:length(algoritmos)
     % Carga los archivos de resultados
-    archivos = dir('../Resultados/Lifting/Comprobaciones/Mejor Algoritmo/' + algoritmos(algo) + "/n=" + n + '/*.mat');
+    archivos = dir('../Resultados/Comparacion/Mejor Algoritmo/' + algoritmos(algo) + '/*.mat');
     
     waveletResults = zeros(length(lsc), length(q));
     
@@ -103,37 +116,42 @@ for algo = 1:length(algoritmos)
         waveletResults(i, :) = datos.resultados;
     end
     
-    % Promedia los resultados
-    totalResults(algo, :) = mean(waveletResults);
+    % Almacena todos los resultados en una sola matriz para analizar su
+    %       varianza y desviacion estandar
+    totalResults(:, :, algo) = waveletResults;
 end
 
 columnsNames = cell(1, length(q));
 for i = 1:length(q)
-    columnsNames{i} = "q = " + q(i);
+    columnsNames{i} = "M = " + q(i);
 end
 
-rowsNames = cell(1, length(algoritmos));
-for i = 1:length(algoritmos)
-    rowsNames{i} = algoritmos(i);
+rowsNames = cell(1, numel(archivos));
+for i = 1:numel(archivos)
+    rowsNames{i} = archivos(i).name;
 end
 
-% Guarda resultados en un archivo .mat
-resultados = array2table(totalResults,  'VariableNames', string(columnsNames), 'RowNames', string(rowsNames));
-save("../Resultados/Lifting/Comprobaciones/Mejor Algoritmo/MejorAlgoritmoN=" + n + ".mat", "resultados");
+% Resultados en un archivo .mat
+resultados = cell(1, length(algoritmos));
 
 % Grafica los resultados
-title('Mejor Algoritmo con ' + string(n) + ' Niveles de Resolución');
+title('Comparación entre Algoritmos');
 grid on;
 grid minor;
 set(gca, 'XScale', 'log');
 set(gca,'xtick', q);
 hold on;
 for i = 1:length(algoritmos)
-    plot(q, totalResults(i, :), 'linewidth', 2.5, 'DisplayName', rowsNames{i});
+    errorbar(q, mean(totalResults(:, :, i)), mean(totalResults(:, :, i)) - min(totalResults(:, :, i)), max(totalResults(:, :, i)) - mean(totalResults(:, :, i)), 'LineWidth', 2.5, 'DisplayName', rowsNames{i});
+    resultados{i} = array2table(totalResults(:, :, i),  'VariableNames', string(columnsNames), 'RowNames', string(rowsNames));
 end
 ax = gca;
 ax.FontSize = 14;
 xlabel('Nivel de Cuantificación');
 ylabel('Calidad');
-legend;
+legend(algoritmos);
 hold off;
+
+% Guarda resultados en un archivo .mat
+save("../Resultados/Comparacion/Mejor Algoritmo/MejorAlgoritmo.mat", "resultados");
+
