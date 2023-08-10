@@ -4,21 +4,29 @@ Este repositorio contiene el código y los recursos utilizados en la investigaci
 
 ## Estructura del repositorio
 
+- `Comprobaciones/`: Contiene las comprobaciones requeridas por la investigación.
 - `Grabaciones/`: Contiene las grabaciones de voz utilizadas en la investigación.
 - `Mediciones/`: Contiene los archivos utilizados para medir el PESQ y el NMSE de los audios procesados.
   - `medirPESQ.m`: Archivo que contiene el código para realizar la medición objetiva PESQ sobre el audio procesado.
   - `medirNMSE.m`: Archivo que contiene el código para realizar la medición objetiva NMSE sobre el audio procesado.
 - `Resultados/`: Contiene los resultados obtenidos en la investigación.
-- `Src/`: contiene el código fuente utilizado para implementar el esquema lifting y mallat.
+  - `Comparacion/`: Contiene los resultados de comparaciones entre 2 o más algoritmos de cuantificación.
+  - `Lifting/`: Contiene los resultados relacionados exclusivamente al algoritmo de cuantificación lifting.
+- `Src/`: Contiene los archivos fuente utilizados en la investigación.
   - `Lifting/`: Contiene los archivos correspondientes al algoritmo de cuantificación lifting.
+    - `Adaptativo/`: Contiene los archivos relacionados con la implementación del algoritmo lifting con el calculo trama a trama de los porcentajes de relevancia.
+    - `Constante/`: Contiene los archivos relacionados con la implementación del algoritmo lifting con el establecimiento previo de los porcentajes de relevancia de todo el audio.
+    - `Tradicional/`: Contiene los archivos relacionados con la implementación del algoritmo lifting sin ninguna distribución particular de bits.
   - `Mallat/`: Contiene los archivos correspondientes al algoritmo de cuantificación mallat.
-  - `pruebasLifting.m`: Archivo principal que contiene el código para realizar las pruebas del esquema Lifting.
-  - `pruebasMallat.m`: Archivo principal que contiene el código para realizar las pruebas del esquema Mallat.
+    - `Adaptativo/`: Contiene los archivos relacionados con la implementación del algoritmo mallat con el calculo trama a trama de los porcentajes de relevancia.
+    - `Tradicional/`: Contiene los archivos relacionados con la implementación del algoritmo mallat sin ninguna distribución particular de bits.
+  - `Tiempo/`: Contiene los archivos correspondientes al algoritmo de cuantificación en el tiempo.
+    - `Tradicional/`: Contiene los archivos relacionados con la implementación de una cuantificación en el tiempo sin ninguna distribución particular de bits.
 - `Utilidades/`: Contiene las funciones y scripts auxiliares utilizados en la investigación.
-  - `audioLecture.m/`: Archivo que contiene el código para realizar la lectura automatizada de los audios dentro de la carpeta `Grabaciones/`.
-  - `cuantUniV.m/`: Archivo que contiene el código para realizar la cuantificación uniforme de un grupo de coeficientes.
-  - `getColumnsNames.m`: Archivo que contiene el código para obtener los nombres de las columnas de las tablas donde se van a guardar los resultados.
-  - `saveResults.m`: Archivo que contiene el código para guardar los resultados de forma dinámica dentro de la carpeta `Resultados/`.
+  - `audioLecture.m`: Archivo que contiene el código para realizar la lectura automatizada de los audios dentro de la carpeta `Grabaciones/`.
+  - `bitDistributor.m`: Archivo que contiene el código para la distribución inteligente del 100% de los bits disponibles.
+  - `cuantUniV.m`: Archivo que contiene el código para realizar la cuantificación uniforme de un grupo de coeficientes.  
+  - `heuristicOptimizer.m`: Archivo que contiene el código que realiza la optimización heuristica de los bits disponibles para cada coeficiente.
   - `signalCropper.m`: Archivo que contiene el código para realizar el recorte necesario de los coeficientes Wavelet y Scaling para que tengan un tamaño potencia de 2.
 
 ## Instrucciones de uso
@@ -26,8 +34,8 @@ Este repositorio contiene el código y los recursos utilizados en la investigaci
 Para utilizar el código fuente y los conjuntos de datos en MATLAB, sigue los siguientes pasos:
 
 1. Descarga o clona este repositorio en tu ordenador.
-2. Abre MATLAB y selecciona la carpeta `src` como directorio de trabajo.
-3. Ejecuta el archivo `pruebasLifting.m` o `pruebasMallat.m` en MATLAB para ejecutar las pruebas correspondientes al algoritmo Lifting o Mallat, respectivamente.
+2. Abre MATLAB y selecciona la carpeta `Comprobaciones/` como directorio de trabajo.
+3. Ejecuta cualquiera de los archivos disponibles en MATLAB para ejecutar las comprobaciones relacionadas con la investigación.
 
 Si deseas utilizar alguna de las funciones o scripts auxiliares ubicados en la carpeta `Utilidades/`, simplemente añade la ruta correspondiente en MATLAB para que pueda ser utilizada.
 
